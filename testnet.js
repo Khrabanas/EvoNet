@@ -9,6 +9,7 @@ function geid(id) {
 function rand() {
   return Math.random();
 } // ^ this is using javascript random, which is not seedable.
+//TODO Implement a fast prng
 canvas.width=1000;
 canvas.height=1000;
 ctx.font = "10px Arial";
@@ -92,9 +93,18 @@ function iterate() {
 //takes the "speed value" from the network and turns it into a distance traveled within my parameters.
 function moveNet(net) {
   
-  net.xPos = net.xPos - (net.speed * Math.cos(net.rot));
-  net.yPos = net.yPos - (net.speed * Math.sin(net.rot));
+  net.xPos = net.xPos - (net.speed);
+  net.yPos = net.yPos - (net.speed);
  
+}
+function setNetPara(hnCount, hlCount) {
+    
+    for(var i = 0; i<hlCount; i++ ) {
+       for(var j = 0; j<hnCount; j++){
+           console.log("jjj");
+           makehid()
+       }
+   }
 }
 
 function makeEye(){
@@ -113,6 +123,62 @@ function makeHid() {
  };
 }
 function makeNet(arrayPos,xPos,yPos) {
+  return {
+    
+    //the input positions. they can be extrapolated directly from the rotation, but for now it is easier to store them here.
+    eyeUpX:null,
+    eyeUpY:null,
+    upIn:null,
+    
+    eyeDownX:null,
+    eyeDownY:null,
+    downIn:null,
+    
+    eyeLeftX:null,
+    eyeLeftY:null,
+    leftIn:null,
+    
+    eyeRightX:null,
+    eyeRightY:null,
+    rightIn:null,
+    
+    //hidden node values, may get removed (h1,h2,h3). they work in the same way as an input value, except they are merely based off them.
+    h1Val:null,
+    h2Val:null,
+    h3Val:null,
+    
+    //up down left right are each sensors, measuring the proximity to other cells.These are the connections between hidden nodes and the outputs.
+    up:makeEye(),
+    down:makeEye(),
+    left:makeEye(),
+    right:makeEye(),
+    
+    //the hidden nodes taking values from the inputs, weighting them, and then forwarding them to outputs. just like the the above.
+    h1:makeHid(),
+    h2:makeHid(),
+    h3:makeHid(),
+    h4:makeHid(),
+    
+    arrayPos:arrayPos, //array position, useful for not choosing the same creature when looking at a population.
+    
+    health:10,
+    
+    diet:rand()*100, // percentatage based ability to digest plants/other creatures. cannot be changed except by mutation 0 = herbivore, 100 = carnivore, 23, 46, 1, 85, etc are varying degrees of omnivore. High/low number = faster rate of killing/plant harvesting
+    
+    rot:rand()*2*Math.PI, //which way is the "creature" pointing.
+    speed:0,
+    
+    xPos:xPos,//start positions
+    yPos:yPos,
+  };
+  
+}
+function newHNode() {
+    return {
+        
+    };
+}
+function newmakeNet(arrayPos,xPos,yPos) {
   return {
     
     //the input positions. they can be extrapolated directly from the rotation, but for now it is easier to store them here.
