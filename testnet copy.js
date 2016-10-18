@@ -37,7 +37,7 @@ function newHabitat(plantCount) {
 //easy mode
 function poputat(popCount) {
   newPop(popCount);
-  newHabitat(popCount/2);
+  newHabitat(Math.round(popCount/2));
 }
 function makePlant(arrayPos, cal, posX, posY) {
   plants[arrayPos] = {
@@ -95,13 +95,19 @@ function moveNet(net) {
     net.xPos = net.xPos - (net.speed * Math.cos(net.rot))/2;
     net.yPos = net.yPos - (net.speed * Math.sin(net.rot))/2;
 }
+//inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
+var inputs = {
+    up,
+    down,
+    left,
+    right,
+};
 //this function sets the parameters of a neural network. For instance: Do I want 3 hidden nodes and 2 layers, or maybe 2 hidden nodes and 6 layers?
-function setNetPara(hnCount, hlCount) {
-    
+function buildNet(hnCount, hlCount) {
     for(var i = 0; i<hlCount; i++ ) {
        for(var j = 0; j<hnCount; j++){
            console.log("jjj");
-           makehid()
+           
        }
    }
 }
@@ -173,15 +179,7 @@ function makeNet(arrayPos,xPos,yPos) {
   };
   
 }
-        h1:makeHid(),
-        h2:makeHid(),
-        h3:makeHid(),
-        h4:makeHid(),
-function newHNode() {
-    return {
-        
-    };
-}
+
 function newmakeNet(arrayPos,xPos,yPos) {
   return {
     
@@ -208,10 +206,7 @@ function newmakeNet(arrayPos,xPos,yPos) {
     h3Val:null,
     
     //up down left right are each sensors, measuring the proximity to other cells.These are the connections between hidden nodes and the outputs.
-    up:makeEye(),
-    down:makeEye(),
-    left:makeEye(),
-    right:makeEye(),
+
     
     //the hidden nodes taking values from the inputs, weighting them, and then forwarding them to outputs. just like the the above.
     hLayers:makeHLayers(),
