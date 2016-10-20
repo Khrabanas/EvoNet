@@ -96,20 +96,27 @@ function moveNet(net) {
     net.yPos = net.yPos - (net.speed * Math.sin(net.rot))/2;
 }
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
-var inputs = {
+var inputStore = {
     up,
     down,
     left,
     right,
 };
+
 //this function sets the parameters of a neural network. For instance: Do I want 3 hidden nodes and 2 layers, or maybe 2 hidden nodes and 6 layers?
-function buildNet(hnCount, hlCount) {
-    for(var i = 0; i<hlCount; i++ ) {
-       for(var j = 0; j<hnCount; j++){
-           console.log("jjj");
-           
-       }
-   }
+//the for/in statement thingy is taken from Andreas Grech's answer on http://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
+function buildNet(hnCount, hlCount, netHome) {
+        for(var i = 0; i<hlCount; i++ ) {
+            for (var j = 0; j < hnCount; j++) {
+                hLayerNodeStore["layer"+i].["node"+j];
+            }
+        }
+    for(var input in inputStore) {
+        if (!p.hasOwnProperty(input)) {
+        continue;
+        }
+//actual code
+    }
 }
 
 function makeEye(){
