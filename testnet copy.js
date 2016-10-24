@@ -5,10 +5,11 @@ var ctx = canvas.getContext('2d');
 function geid(id) {
   return document.getElementById(id);
 }
-//may later change to a PRNG
+//WILL later change to a PRNG
+
 function rand() {
   return Math.random();
-} // ^ this is using javascript random, which is not seedable.
+} // ^ this is using javascript random, which is not seedable an will not let me have a determinate universe.
 //TODO Implement a fast prng
 canvas.width=1000;
 canvas.height=1000;
@@ -34,7 +35,7 @@ function newHabitat(plantCount) {
   }
   
 }
-//easy mode
+//just does what it does
 function poputat(popCount) {
   newPop(popCount);
   newHabitat(Math.round(popCount/2));
@@ -102,20 +103,31 @@ var inputStore = {
     left,
     right,
 };
+var outputStore = {
+    rot,
+    speed,
+};
 
 //this function sets the parameters of a neural network. For instance: Do I want 3 hidden nodes and 2 layers, or maybe 2 hidden nodes and 6 layers?
 //the for/in statement thingy is taken from Andreas Grech's answer on http://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
 function buildNet(hnCount, hlCount, netHome) {
+    var nn = {}; //new net
+    var hLayers = {};
         for(var i = 0; i<hlCount; i++ ) {
+            hLayers["layer"+i] = {};
             for (var j = 0; j < hnCount; j++) {
-                hLayerNodeStore["layer"+i].["node"+j];
+                hLayers["layer" + i]["node"+j] = {};
             }
         }
     for(var input in inputStore) {
         if (!p.hasOwnProperty(input)) {
         continue;
         }
-//actual code
+        for(var k=0;k<hLayers.length; k++){
+            nn[inputWeights];
+        }
+//code^
+
     }
 }
 
