@@ -10,6 +10,11 @@ function geid(id) {
 function rand() {
   return Math.random();
 } // ^ this is using javascript random, which is not seedable an will not let me have a determinate universe.
+
+// pos/neg round, used for NN connections.
+function pnrand() {
+    return rand()*2 - 1;
+}
 //TODO Implement a fast prng
 canvas.width=1000;
 canvas.height=1000;
@@ -48,7 +53,7 @@ function makePlant(arrayPos, cal, posX, posY) {
     
   };
 }
-//eye configuration should be this.
+//eye configuration should be this. labeled this way so that A syncs up with 0rad (B with PI/2, etc).
 //    B
 //
 //C   +   A (head/forward direction)=>>>
@@ -56,6 +61,23 @@ function makePlant(arrayPos, cal, posX, posY) {
 //    D
 //I need to turn up down left right into a b c d. MUUUCH LESS CONFUSING.
 
+//merely iterates at some amount of time. 1000 = 1 second per iteration.
+
+function run(msecs) {
+    if (running === true){
+        console.log("Error in function: 'run', Time is already passing, use stop and run again.");
+        return;
+    }
+    time = setInterval(msecs, iterate);
+    running = true;
+}
+function stop() {
+    if (running === false) {
+        console.log("Error in fuction: 'stop', Already stopped.");
+    }
+    clearInterval(time);
+    running = false;
+}
 //each step of the simulation is contained in an iteration.
 //PROBLEM I NEED TO FIX: Make it so that they only move after every network has analyzed the current setup.
 function iterate() {
