@@ -7,10 +7,11 @@ function geid(id) {
 }
 //WILL later change to a PRNG
 var seed = 1;
+var xorRandom = Xor4096(1);
 function rand() {
 //  return Math.random();
 // ^ this is using javascript random, which is not seedable an will not let me have a determinate universe.
-return
+return xorRandom();
 }
 // pos/neg round, used for NN connections.
 function pnrand() {
