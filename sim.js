@@ -8,13 +8,13 @@ function geid(id) {
 //WILL later change to a PRNG
 var seed = 1;
 var xorRandom = Xor4096(1);
-//xorshift is a slower 
+//xorshift is a slower
 function rand() {
 //  return Math.random();
 // ^ this is using javascript random, which is not seedable an will not let me have a determinate universe.
 return xorRandom();
 }
-// pos/neg round, used for NN connections.
+// pos/neg random, used for NN connections.
 function pnrand() {
     return rand()*2 - 1;
 }
@@ -147,9 +147,9 @@ function buildNet(hnCount, hlCount) {
   nn.inputs = inputStore;
   nn.outputs = outputStore;
   for(var i = 0; i<hlCount; i++ ) {
-    nn.hLayers["layer"+i] = {};
+    nn.hLayers["layer"+i] = {layerNumber:i};
     for (var j = 0; j < hnCount; j++) {
-      nn.hLayers["layer" + i]["node"+j] = {};
+      nn.hLayers["layer" + i]["node"+j] = {nodeNumber:i};
     }
   }
 
@@ -188,26 +188,39 @@ function makeOrganism(hnCount, hlCount, netHome, x, y, rot) {
 }
 //a network thinking.
 function readNet(net) {
-  getHVals(net);
-  getRotOut(net);
-  getSpeedOut(net);
-}
-// the values of the hidden nodes, after going through the inputs.
-function getHVals(net) {
-  net.h1Val = (net.upIn * net.up.h1W + net.downIn * net.down.h1W + net.leftIn * net.left.h1W + net.rightIn * net.right.h1W)/4;
-  net.h2Val = (net.upIn * net.up.h2W + net.downIn * net.down.h2W + net.leftIn * net.left.h2W + net.rightIn * net.right.h2W)/4;
-  net.h3Val = (net.upIn * net.up.h3W + net.downIn * net.down.h3W + net.leftIn * net.left.h3W + net.rightIn * net.right.h3W)/4;
-  net.h4Val = (net.upIn * net.up.h4W + net.downIn * net.down.h4W + net.leftIn * net.left.h4W + net.rightIn * net.right.h4W)/4;
-}
-//the full output towards the rotation, so the final amount that the network wants to rotate.
-function getRotOut(net) {
-  net.rot = (net.upIn * net.up.rotW + net.downIn * net.down.rotW + net.leftIn * net.left.rotW + net.rightIn * net.right.rotW + net.h1Val * net.h1.rotW
-  + net.h2Val * net.h2.rotW + net.h3Val * net.h3.rotW + net.h4Val * net.h4.rotW)/8;
+    for(var layer in nn.hLayers) {
+        if (!nn.inputs.hasOwnProperty(input)) {continue;}
+        for(var node in nn.hLayers[layer]) {
+            //the split
+            
+            var sum = 0;
+            
+            for (var input in nn.inputs){
+                var test = 1;
+            }
+            for(var prevLayer in nn.hLayers) {
+                if (!nn.hLayers.hasOwnProperty(prevLayer) && prevLayer.layerNumber >= layer.layerNumber) {continue;}
+                for (var prevNode in nn.hLayers[prevLayer]) {
+                    if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode)) {continue;}
+                    sum += nn.inputs[hLayers][prevLayer][prev]//working right here currently
+                }
+            }
+            nn.hLayers[layer][node]["value"] =
+        }
+        
+    }
+    nn.hLayers["layer"+i];
+    for (var j = 0; j < hnCount; j++) {
+      nn.hLayers["layer" + i]["node"+j] = {};
+    }
 }
 
-function getSpeedOut(net) {
-  net.speed = (net.upIn * net.up.speedW + net.downIn * net.down.speedW + net.leftIn * net.left.speedW + net.rightIn * net.right.speedW + net.h1Val * net.h1.speedW + net.h2Val * net.h2.speedW + net.h3Val * net.h3.speedW + net.h4Val * net.h4.speedW)/8;
-}
+
+
+
+
+
+
 //finds the placement of each of the eyes from the rot of the creature. in radians.
 function rotEyes(net) {
 
