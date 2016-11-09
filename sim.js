@@ -142,10 +142,8 @@ var outputStore = {
 };
 //this function sets the parameters of a neural network. For instance: Do I want 3 hidden nodes and 2 layers, or maybe 2 hidden nodes and 6 layers?
 //the for/in statement thingy is taken from Andreas Grech's answer on http://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
-function buildNet(hnCount, hlCount, netHome, x, y) {
+function buildNet(hnCount, hlCount) {
   var nn = {}; //new net
-  nn.x = x;
-  nn.y = y;
   nn.hLayers = {};
   nn.inputs = inputStore;
   nn.outputs = outputStore;
@@ -177,7 +175,18 @@ function buildNet(hnCount, hlCount, netHome, x, y) {
   }
   return nn;
 }
-
+function makeOrganism(hnCount, hlCount, netHome, x, y, rot) {
+  var org = {};
+  org.x = x;
+  org.y = y;
+  org.rot = rot;
+  
+  org.color = 1;
+  
+  org.nn = buildNet(hnCount, hlCount);
+  
+  return org;
+}
 //a network thinking.
 function readNet(net) {
   getHVals(net);
