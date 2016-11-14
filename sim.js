@@ -5,13 +5,13 @@ var ctx = canvas.getContext('2d');
 function geid(id) {
   return document.getElementById(id);
 }
-//WILL later change to a PRNG
+//WILL later change to a PRNG //done
 var seed = 1;
 var xorRandom = Xor4096(1);
-//xorshift is a slower
+//xorshift is alower by a bit than Math.random()
 function rand() {
 //  return Math.random();
-// ^ this is using javascript random, which is not seedable an will not let me have a determinate universe.
+// ^ this is using javascript random, which is not seedable and will not let me have a determinate universe.
 return xorRandom();
 }
 // pos/neg random, used for NN connections.
@@ -32,12 +32,12 @@ function clearCanvas() {
 var pop = [];
 function newPop(hnCount, hlCount, popCount) {
   pop = [];
-  clearCanvas();
+  //clearCanvas();
 
   for(var i=0; i<popCount; i++){
     pop[i]=buildNet(hnCount, hlCount, i, rand()*canvas.width, rand()*canvas.height);
     //ctx.fillStyle="rgb("+2.55*pop[i].diet + ",0," + 255/pop[i].diet + ")";
-    ctx.fillText(i,pop[i].xPos,pop[i].yPos);
+    //ctx.fillText(i,pop[i].xPos,pop[i].yPos);
   }
 
 }
@@ -130,10 +130,10 @@ function moveNet(net) {
 }
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
 var inputStore = {
-    up:{},
-    down:{},
-    left:{},
-    right:{},
+    up:{value:0},
+    down:{value:0},
+    left:{value:0},
+    right:{value:0},
 };
 var outputStore = {
     rot:{},
@@ -149,10 +149,9 @@ function buildNet(hnCount, hlCount) {
   for(var i = 0; i<hlCount; i++ ) {
     nn.hLayers["layer"+i] = {layerNumber:i};
     for (var j = 0; j < hnCount; j++) {
-      nn.hLayers["layer" + i]["node"+j] = {nodeNumber:i};
+      nn.hLayers["layer" + i]["node"+j] = {};
     }
   }
-
   for(var input in nn.inputs) {
     if (!nn.inputs.hasOwnProperty(input)){continue;}
     //probably don't need to store this twice, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
@@ -172,6 +171,14 @@ function buildNet(hnCount, hlCount) {
       }
     }
   }
+  nn.axons = nn.hLayers;
+  for(var axonLayer in nn.axons) {
+    nn.hLayers["layer"+i] = {layerNumber:i};
+        for (var j = 0; j < hnCount; j++) {
+        nn.hLayers["layer" + i]["node"+j] = {};
+        }
+  }
+  
   return nn;
 }
 function makeOrganism(hnCount, hlCount, netHome, x, y, rot) {
@@ -191,18 +198,19 @@ function readNet(net) {
     for(var layer in nn.hLayers) {
         if (!nn.inputs.hasOwnProperty(input)) {continue;}
         for(var node in nn.hLayers[layer]) {
-            //the split
+            //the split between the node it goes to^ and the node it comes from \/
             
             var sum = 0;
-            
+            //lines leading from inputs to node.
             for (var input in nn.inputs){
                 var test = 1;
             }
+            
             for(var prevLayer in nn.hLayers) {
                 if (!nn.hLayers.hasOwnProperty(prevLayer) && prevLayer.layerNumber >= layer.layerNumber) {continue;}
                 for (var prevNode in nn.hLayers[prevLayer]) {
                     if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode)) {continue;}
-                    sum += nn.inputs[hLayers][prevLayer][prev]//working right here currently
+                    sum += nn.inputs[hLayers][prevLayer][prevNode].axon * nn.hLayers[]
                 }
             }
             nn.hLayers[layer][node]["value"] =
