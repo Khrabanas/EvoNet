@@ -149,7 +149,7 @@ function buildNet(hnCount, hlCount) {
   for(var i = 0; i<hlCount; i++ ) {
     nn.hLayers["layer"+i] = {layerNumber:i};
     for (var j = 0; j < hnCount; j++) {
-      nn.hLayers["layer" + i]["node"+j] = {};
+      nn.hLayers["layer" + i]["node"+j] = {nodeNumber:j};
     }
   }
   for(var input in nn.inputs) {
@@ -159,7 +159,7 @@ function buildNet(hnCount, hlCount) {
     //input is a,b,c,d.
     //layer is layer1,layer2, etc.
     //node is node0,node3, etc
-    //so, accessing the lowest axon is: "nn.inputs.a.layer0.node0.axon"
+    //so, accessing the lowest axon of the inputs is: "nn.inputs.a.layer0.node0.axon"
 
     for(var layer in nn.inputs[input]) {
       if (!nn.inputs[input].hasOwnProperty(layer)){continue;}
@@ -173,10 +173,21 @@ function buildNet(hnCount, hlCount) {
   }
   nn.axons = nn.hLayers;
   for(var axonLayer in nn.axons) {
-    nn.hLayers["layer"+i] = {layerNumber:i};
-        for (var j = 0; j < hnCount; j++) {
-        nn.hLayers["layer" + i]["node"+j] = {};
+        if (!nn.axons.hasOwnProperty(axonLayer)){continue;}
+        for(var axonNode in nn.axons[axonLayer]) {
+          if (!nn.axons[axonLayer]hasOwnProperty(axonNode)){continue;}
+          //the split
+            for(var nextLayer in nn.hLayers) {
+                if (!nn.hLayers.hasOwnProperty(nextLayer) && nextLayer.layerNumber <= axon.layerNumber) {continue;}
+              nn.axons[axonLayer][axonNode][nextLayer] = {};
+              
+              for (var nextNode in nn.hLayers[nextLayer]) {
+                    if (!nn.hLayers[nextLayer].hasOwnProperty(nextNode)) {continue;}
+                nn.axons[axonLayer][axonNode][nextLayer][nextNode] = pnrand();
+                  
+       
         }
+      }
   }
   
   return nn;
