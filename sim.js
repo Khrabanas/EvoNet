@@ -142,56 +142,77 @@ var outputStore = {
 //this function sets the parameters of a neural network. For instance: Do I want 3 hidden nodes and 2 layers, or maybe 2 hidden nodes and 6 layers?
 //the for/in statement thingy is taken from Andreas Grech's answer on http://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
 function buildNet(hnCount, hlCount) {
-  var nn = {}; //new net
-  nn.hLayers = {};
-  nn.inputs = inputStore;
-  nn.outputs = outputStore;
-  for(var i = 0; i<hlCount; i++ ) {
-    nn.hLayers["layer"+i] = {layerNumber:i};
-    for (var j = 0; j < hnCount; j++) {
-      nn.hLayers["layer" + i]["node"+j] = {nodeNumber:j};
-    }
-  }
-  for(var input in nn.inputs) {
-    if (!nn.inputs.hasOwnProperty(input)){continue;}
-    //probably don't need to store this twice, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
-    nn.inputs[input] = nn.hLayers;
-    //input is a,b,c,d.
-    //layer is layer1,layer2, etc.
-    //node is node0,node3, etc
-    //so, accessing the lowest axon of the inputs is: "nn.inputs.a.layer0.node0.axon"
-
-    for(var layer in nn.inputs[input]) {
-      if (!nn.inputs[input].hasOwnProperty(layer)){continue;}
-
-      for(var node in nn.inputs[input][layer]) {
-        if (!nn.inputs[input][layer].hasOwnProperty(node)){continue;}
-        nn.inputs[input][layer][node].axon = pnrand();
-
-      }
-    }
-  }
-  nn.axons = nn.hLayers;
-  for(var axonLayer in nn.axons) {
-        if (!nn.axons.hasOwnProperty(axonLayer)){continue;}
-        for(var axonNode in nn.axons[axonLayer]) {
-          if (!nn.axons[axonLayer]hasOwnProperty(axonNode)){continue;}
-          //the split
-            for(var nextLayer in nn.hLayers) {
-                if (!nn.hLayers.hasOwnProperty(nextLayer) && nextLayer.layerNumber <= axon.layerNumber) {continue;}
-              nn.axons[axonLayer][axonNode][nextLayer] = {};
-              
-              for (var nextNode in nn.hLayers[nextLayer]) {
-                    if (!nn.hLayers[nextLayer].hasOwnProperty(nextNode)) {continue;}
-                nn.axons[axonLayer][axonNode][nextLayer][nextNode] = pnrand();
-                  
-       
+    var nn = {}; //new net
+    nn.hLayers = {};
+    nn.inputs = inputStore;
+    nn.outputs = outputStore;
+    for (var i = 0; i < hlCount; i++) {
+        nn.hLayers["layer" + i] = {
+            layerNumber: i
+        };
+        for (var j = 0; j < hnCount; j++) {
+            nn.hLayers["layer" + i]["node" + j] = {
+                nodeNumber: j,
+                value:0 //this is merely the start value.it will change eveytime it updates.
+            };
         }
-      }
-  }
-  
-  return nn;
+    }
+    for (var input in nn.inputs) {
+        if (!nn.inputs.hasOwnProperty(input)) {
+            continue;
+        }
+        //probably don't need to store this twice, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
+        nn.inputs[input] = nn.hLayers;
+        //input is a,b,c,d.
+        //layer is layer1,layer2, etc.
+        //node is node0,node3, etc
+        //so, accessing the lowest axon of the inputs is: "nn.inputs.a.layer0.node0.axon"
+
+        for (var layer in nn.inputs[input]) {
+            if (!nn.inputs[input].hasOwnProperty(layer)) {
+                continue;
+            }
+
+            for (var node in nn.inputs[input][layer]) {
+                if (!nn.inputs[input][layer].hasOwnProperty(node)) {
+                    continue;
+                }
+                nn.inputs[input][layer][node].axon = pnrand();
+
+            }
+        }
+    }
+    nn.axons = nn.hLayers;
+    for (var axonLayer in nn.axons) {
+        if (!nn.axons.hasOwnProperty(axonLayer)) {
+            continue;
+        }
+        for (var axonNode in nn.axons[axonLayer]) {
+            if (!nn.axons[axonLayer].hasOwnProperty(axonNode)) {
+                continue;
+            }
+            //the split
+            for (var nextLayer in nn.hLayers) {
+                if (!nn.hLayers.hasOwnProperty(nextLayer) && nextLayer.layerNumber <= axon.layerNumber) {
+                    continue;
+                }
+                nn.axons[axonLayer][axonNode][nextLayer] = {};
+
+                for (var nextNode in nn.hLayers[nextLayer]) {
+                    if (!nn.hLayers[nextLayer].hasOwnProperty(nextNode)) {
+                        continue;
+                    }
+                    nn.axons[axonLayer][axonNode][nextLayer][nextNode] = pnrand();
+
+
+                }
+            }
+        }
+
+        return nn;
+    }
 }
+
 function makeOrganism(hnCount, hlCount, netHome, x, y, rot) {
   var org = {};
   org.x = x;
@@ -207,26 +228,45 @@ function makeOrganism(hnCount, hlCount, netHome, x, y, rot) {
 //a network thinking.
 function readNet(net) {
     for(var layer in nn.hLayers) {
-        if (!nn.inputs.hasOwnProperty(input)) {continue;}
-        for(var node in nn.hLayers[layer]) {
+        if (!nn.inputs.hasOwnProperty(input)) {
+            continue;
+        }
+        for (var node in nn.hLayers[layer]) {
             //the split between the node it goes to^ and the node it comes from \/
-            
+    
             var sum = 0;
             //lines leading from inputs to node.
-            for (var input in nn.inputs){
-                var test = 1;
-            }
+            for (var input in nn.inputs) {
+                if (!nn.hLayers.hasOwnProperty(prevLayer) && prevLayer.layerNumber >= layer.layerNumber) {
+                    continue;
+                }
             
-            for(var prevLayer in nn.hLayers) {
-                if (!nn.hLayers.hasOwnProperty(prevLayer) && prevLayer.layerNumber >= layer.layerNumber) {continue;}
-                for (var prevNode in nn.hLayers[prevLayer]) {
-                    if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode)) {continue;}
-                    sum += nn.inputs[hLayers][prevLayer][prevNode].axon * nn.hLayers[]
+                for (var inputLayer in nn.inputs[input]) {//<<== working on this right now
+            
+                    if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode)) {
+                        continue;
+                    }
+                    sum += nn.axons[prevLayer][prevNode].axon * nn.hLayers[prevLayer][prevNode].value;
                 }
             }
-            nn.hLayers[layer][node]["value"] =
+    //nn.inputs.a.layer0.node0.axon
+            for (var prevLayer in nn.hLayers) {
+                if (!nn.hLayers.hasOwnProperty(prevLayer) && prevLayer.layerNumber >= layer.layerNumber) {
+                    continue;
+                }
+    
+                for (var prevNode in nn.hLayers[prevLayer]) {
+    
+                    if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode)) {
+                        continue;
+                    }
+                    sum += nn.axons[prevLayer][prevNode].axon * nn.hLayers[prevLayer][prevNode].value;
+                }
+            }
+    
+            nn.hLayers[layer][node].value = sum //fix dis
         }
-        
+    
     }
     nn.hLayers["layer"+i];
     for (var j = 0; j < hnCount; j++) {
