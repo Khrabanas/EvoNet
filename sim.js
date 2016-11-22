@@ -7,7 +7,7 @@ function geid(id) {
 }
 //WILL later change to a PRNG //done
 var seed = 1;
-var xorRandom = Xor4096(1);
+var xorRandom = xor4096(1);
 //xorshift is alower by a bit than Math.random()
 function rand() {
 //  return Math.random();
@@ -162,8 +162,8 @@ function buildNet(hnCount, hlCount) {
             continue;
         }
         //probably don't need to store this twice, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
-        nn.inputs[input] = 0;
         nn.inputs[input] = nn.hLayers;
+        nn.inputs[input].value = 0;
         //input is a,b,c,d.
         //layer is layer1,layer2, etc.
         //node is node0,node3, etc
@@ -197,13 +197,13 @@ function buildNet(hnCount, hlCount) {
                 if (!nn.hLayers.hasOwnProperty(nextLayer) && nextLayer.layerNumber <= axon.layerNumber) {
                     continue;
                 }
-                nn.axons[axonLayer][axonNode][nextLayer] = {};
 
                 for (var nextNode in nn.hLayers[nextLayer]) {
                     if (!nn.hLayers[nextLayer].hasOwnProperty(nextNode)) {
                         continue;
                     }
-                    nn.axons[axonLayer][axonNode][nextLayer][nextNode] = pnrand();
+                      nn.axons[axonLayer][axonNode][nextLayer] = {nextNode:pnrand()}; // fix me plzzzz
+//                    nn.axons[axonLayer][axonNode][nextLayer][nextNode] = pnrand();
 
 
                 }
@@ -238,15 +238,15 @@ function readNet(net) {
             var sum = 0;
             var sumCount = 0;
             //lines leading from inputs to node.
-          
+    
             for (var input in nn.inputs) {
                 if (!nn.inputs.hasOwnProperty(input)) {
                     continue;
                 }
                 sum += nn.inputs[input][layer][node].axon * nn.inputs[input].value;
-                sumCount++;    
+                sumCount++;
             }
-    //nn.inputs.a.layer0.node0.axon
+            //nn.inputs.a.layer0.node0.axon
             for (var prevLayer in nn.hLayers) {
                 if (!nn.hLayers.hasOwnProperty(prevLayer) && prevLayer.layerNumber >= layer.layerNumber) {
                     continue;
@@ -261,11 +261,11 @@ function readNet(net) {
                 }
             }
     
-            nn.hLayers[layer][node].value = sum/sumCount;
+            nn.hLayers[layer][node].value = sum / sumCount;
         }
     
     }
-    }
+    
 }
 
 
