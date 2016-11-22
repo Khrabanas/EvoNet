@@ -153,7 +153,7 @@ function buildNet(hnCount, hlCount) {
         for (var j = 0; j < hnCount; j++) {
             nn.hLayers["layer" + i]["node" + j] = {
                 nodeNumber: j,
-                value:0 //this is merely the start value.it will change eveytime it updates.
+                value:0 //this is merely the start value. it will change eveytime it updates.
             };
         }
     }
@@ -162,6 +162,7 @@ function buildNet(hnCount, hlCount) {
             continue;
         }
         //probably don't need to store this twice, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
+        nn.inputs[input] = 0;
         nn.inputs[input] = nn.hLayers;
         //input is a,b,c,d.
         //layer is layer1,layer2, etc.
@@ -235,19 +236,15 @@ function readNet(net) {
             //the split between the node it goes to^ and the node it comes from \/
     
             var sum = 0;
+            var sumCount = 0;
             //lines leading from inputs to node.
+          
             for (var input in nn.inputs) {
-                if (!nn.hLayers.hasOwnProperty(prevLayer) && prevLayer.layerNumber >= layer.layerNumber) {
+                if (!nn.inputs.hasOwnProperty(input)) {
                     continue;
                 }
-            
-                for (var inputLayer in nn.inputs[input]) {//<<== working on this right now
-            
-                    if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode)) {
-                        continue;
-                    }
-                    sum += nn.axons[prevLayer][prevNode].axon * nn.hLayers[prevLayer][prevNode].value;
-                }
+                sum += nn.inputs[input][layer][node].axon * nn.inputs[input].value;
+                sumCount++;    
             }
     //nn.inputs.a.layer0.node0.axon
             for (var prevLayer in nn.hLayers) {
@@ -264,13 +261,10 @@ function readNet(net) {
                 }
             }
     
-            nn.hLayers[layer][node].value = sum //fix dis
+            nn.hLayers[layer][node].value = sum/sumCount;
         }
     
     }
-    nn.hLayers["layer"+i];
-    for (var j = 0; j < hnCount; j++) {
-      nn.hLayers["layer" + i]["node"+j] = {};
     }
 }
 
