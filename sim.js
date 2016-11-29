@@ -18,7 +18,9 @@ return xorRandom();
 function pnrand() {
     return rand()*2 - 1;
 }
-
+function deepClone(a) {
+  return JSON.parse(JSON.stringify(a));
+}
 
 canvas.width=1000;
 canvas.height=1000;
@@ -104,19 +106,19 @@ function iterate() {
   }
   for(i = 0; i < pop.length; i++) {
 
-    if (canvas.width < pop[i].xPos || 0 > pop[i].xPos || canvas.height < pop[i].yPos || 0 > pop[i].yPos) {
-    pop[i] = makeNet(i, rand()*canvas.width, rand()*canvas.height);
-    }
+      if (canvas.width < pop[i].xPos || 0 > pop[i].xPos || canvas.height < pop[i].yPos || 0 > pop[i].yPos) {
+          pop[i] = makeNet(i, rand() * canvas.width, rand() * canvas.height);
+      }
 
-    moveNet(pop[i]);
-    rotEyes(pop[i]);
-    addProxes(pop[i]);
+      moveNet(pop[i]);
+      rotEyes(pop[i]);
+      addProxes(pop[i]);
 
-    ctx.fillText(i, pop[i].xPos, pop[i].yPos);
-    ctx.fillText("U", pop[i].eyeUpX, pop[i].eyeUpY);
-    ctx.fillText("D", pop[i].eyeDownX, pop[i].eyeDownY);
-    ctx.fillText("L", pop[i].eyeLeftX, pop[i].eyeLeftY);
-    ctx.fillText("R", pop[i].eyeRightX, pop[i].eyeRightY);
+      ctx.fillText(i, pop[i].xPos, pop[i].yPos);
+      ctx.fillText("U", pop[i].eyeUpX, pop[i].eyeUpY);
+      ctx.fillText("D", pop[i].eyeDownX, pop[i].eyeDownY);
+      ctx.fillText("L", pop[i].eyeLeftX, pop[i].eyeLeftY);
+      ctx.fillText("R", pop[i].eyeRightX, pop[i].eyeRightY);
 
 
   }
@@ -136,22 +138,28 @@ var inputStore = {
     right:{value:0},
 };
 var outputStore = {
-    rot:{},
-    speed:{},
+    rot:{value:0},
+    speed:{value:0},
 };
 //this function sets the parameters of a neural network. For instance: Do I want 3 hidden nodes and 2 layers, or maybe 2 hidden nodes and 6 layers?
-//the for/in statement thingy is taken from Andreas Grech's answer on http://stackoverflow.com/questions/684672/how-do-i-loop-through-or-enumerate-a-javascript-object
+//How it should work:
+
+//nn.inputs contains the input values as well as the synapses leading from them to the nodes and outputs.
+//nn.synapses is specifically for the synapses leading from the hidden nodes to the other hidden nodes and the ouputs.
+//nn.hLayers is the simple structure of the neural network, as well as the values for the nodes. No synapses should be stored here.
 function buildNet(hnCount, hlCount) {
     var nn = {}; //new net
     nn.hLayers = {};
     nn.inputs = inputStore;
     nn.outputs = outputStore;
     for (var i = 0; i < hlCount; i++) {
-        nn.hLayers["layer" + i] = {
+      var lID = "layer"+i;
+        nn.hLayers[lID] = {
             layerNumber: i
         };
         for (var j = 0; j < hnCount; j++) {
-            nn.hLayers["layer" + i]["node" + j] = {
+          var nID = "node"+j;
+            nn.hLayers[lID][nID] = {
                 nodeNumber: j,
                 value:0 //this is merely the start value. it will change eveytime it updates.
             };
@@ -161,13 +169,13 @@ function buildNet(hnCount, hlCount) {
         if (!nn.inputs.hasOwnProperty(input)) {
             continue;
         }
-        //probably don't need to store this twice, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
-        nn.inputs[input] = nn.hLayers;
+        //probably don't need to store this multiple times, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
+        nn.inputs[input] = deepClone(nn.hLayers);
         nn.inputs[input].value = 0;
         //input is a,b,c,d.
         //layer is layer1,layer2, etc.
         //node is node0,node3, etc
-        //so, accessing the lowest axon of the inputs is: "nn.inputs.a.layer0.node0.axon"
+        //so, accessing the lowest synapse of the inputs is: "nn.inputs.a.layer0.node0.synapse"
 
         for (var layer in nn.inputs[input]) {
             if (!nn.inputs[input].hasOwnProperty(layer)) {
@@ -178,23 +186,23 @@ function buildNet(hnCount, hlCount) {
                 if (!nn.inputs[input][layer].hasOwnProperty(node)) {
                     continue;
                 }
-                nn.inputs[input][layer][node].axon = pnrand();
+                nn.inputs[input][layer][node].synapse = pnrand();
 
             }
         }
     }
-    nn.axons = nn.hLayers;
-    for (var axonLayer in nn.axons) {
-        if (!nn.axons.hasOwnProperty(axonLayer)) {
+    nn.synapses = deepClone(nn.hLayers);
+    for (var synapseLayer in nn.synapses) {
+        if (!nn.synapses.hasOwnProperty(synapseLayer)) {
             continue;
         }
-        for (var axonNode in nn.axons[axonLayer]) {
-            if (!nn.axons[axonLayer].hasOwnProperty(axonNode)) {
+        for (var synapseNode in nn.synapses[synapseLayer]) {
+            if (!nn.synapses[synapseLayer].hasOwnProperty(synapseNode)) {
                 continue;
             }
             //the split
             for (var nextLayer in nn.hLayers) {
-                if (!nn.hLayers.hasOwnProperty(nextLayer) && nextLayer.layerNumber <= axon.layerNumber) {
+                if (!nn.hLayers.hasOwnProperty(nextLayer) && nextLayer[layerNumber] <= synapseLayer[layerNumber]) {
                     continue;
                 }
 
@@ -202,15 +210,15 @@ function buildNet(hnCount, hlCount) {
                     if (!nn.hLayers[nextLayer].hasOwnProperty(nextNode)) {
                         continue;
                     }
-                      nn.axons[axonLayer][axonNode][nextLayer] = {nextNode:pnrand()}; // fix me plzzzz
-//                    nn.axons[axonLayer][axonNode][nextLayer][nextNode] = pnrand();
+                    nn.synapses[synapseLayer][synapseNode][nextLayer][nextNode].value = pnrand();
+
 
 
                 }
             }
         }
 
-        return nn;
+        return nn; 
     }
 }
 
@@ -219,11 +227,11 @@ function makeOrganism(hnCount, hlCount, netHome, x, y, rot) {
   org.x = x;
   org.y = y;
   org.rot = rot;
-  
+
   org.color = 1;
-  
+
   org.nn = buildNet(hnCount, hlCount);
-  
+
   return org;
 }
 //a network thinking.
@@ -234,38 +242,38 @@ function readNet(net) {
         }
         for (var node in nn.hLayers[layer]) {
             //the split between the node it goes to^ and the node it comes from \/
-    
+
             var sum = 0;
             var sumCount = 0;
             //lines leading from inputs to node.
-    
+
             for (var input in nn.inputs) {
                 if (!nn.inputs.hasOwnProperty(input)) {
                     continue;
                 }
-                sum += nn.inputs[input][layer][node].axon * nn.inputs[input].value;
+                sum += nn.inputs[input][layer][node].synapse * nn.inputs[input].value;
                 sumCount++;
             }
-            //nn.inputs.a.layer0.node0.axon
+            //nn.inputs.a.layer0.node0.synapse
             for (var prevLayer in nn.hLayers) {
                 if (!nn.hLayers.hasOwnProperty(prevLayer) && prevLayer.layerNumber >= layer.layerNumber) {
                     continue;
                 }
-    
+
                 for (var prevNode in nn.hLayers[prevLayer]) {
-    
+
                     if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode)) {
                         continue;
                     }
-                    sum += nn.axons[prevLayer][prevNode].axon * nn.hLayers[prevLayer][prevNode].value;
+                    sum += nn.synapses[prevLayer][prevNode].synapse * nn.hLayers[prevLayer][prevNode].value;
                 }
             }
-    
+
             nn.hLayers[layer][node].value = sum / sumCount;
         }
-    
+
     }
-    
+
 }
 
 
