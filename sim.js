@@ -1,7 +1,8 @@
+// idk why I am putting this here but this a very usefl resource for later use http://marinepalaeoecology.org/wp-content/uploads/2016/11/Scheffers_at_al_CC_impacts_Science_2016.pdf
 var canvas = geid('canvas');
 var ctx = canvas.getContext('2d');
 
-//get id, so I can easily make a ui.
+//get id, so I can easily make a ui when I need to.
 function geid(id) {
   return document.getElementById(id);
 }
@@ -18,6 +19,7 @@ return xorRandom();
 function pnrand() {
     return rand()*2 - 1;
 }
+//this function clones an array or object or whatever, so do not say theArrayIWant.somePartOfIt = otherArray, instead have theArrayIWant.somePartOfIt = deepClone(otherArray)
 function deepClone(a) {
   return JSON.parse(JSON.stringify(a));
 }
@@ -200,25 +202,28 @@ function buildNet(hnCount, hlCount) {
             if (!nn.synapses[synapseLayer].hasOwnProperty(synapseNode)) {
                 continue;
             }
+            nn.synapses[synapseLayer][synapseNode] = deepClone(nn.hLayers);
             //the split
-            for (var nextLayer in nn.hLayers) {
-                if (!nn.hLayers.hasOwnProperty(nextLayer) && nextLayer[layerNumber] <= synapseLayer[layerNumber]) {
+            
+            for (var nextLayer in nn.synapses[synapseLayer][synapseNode]) {
+                if (!nn.hLayers.hasOwnProperty(nextLayer) && nn.synapses[synapseLayer][synapseNode][nextLayer].layerNumber <= nn.synapses[synapseLayer].layerNumber) {
+                    delete nn.synapses[synapseLayer][synapseNode][nextLayer];
                     continue;
                 }
-
+                
                 for (var nextNode in nn.hLayers[nextLayer]) {
                     if (!nn.hLayers[nextLayer].hasOwnProperty(nextNode)) {
                         continue;
                     }
+                    
                     nn.synapses[synapseLayer][synapseNode][nextLayer][nextNode].value = pnrand();
-
-
-
+                
+                
                 }
             }
         }
 
-        return nn; 
+        return nn;
     }
 }
 
