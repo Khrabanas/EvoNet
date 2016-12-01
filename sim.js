@@ -174,6 +174,14 @@ function buildNet(hnCount, hlCount) {
         //probably don't need to store this multiple times, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
         nn.inputs[input] = deepClone(nn.hLayers);
         nn.inputs[input].value = 0;
+        
+        for(var output in nn.outputs) {
+            if (!nn.outputs.hasOwnProperty(output)) {
+                continue;
+            }
+            nn.inputs[input][output] = {synapse:pnrand()};
+            
+        }
         //input is a,b,c,d.
         //layer is layer1,layer2, etc.
         //node is node0,node3, etc
@@ -193,22 +201,42 @@ function buildNet(hnCount, hlCount) {
             }
         }
     }
+    
     nn.synapses = deepClone(nn.hLayers);
     for (var synapseLayer in nn.synapses) {
-        if (!nn.synapses.hasOwnProperty(synapseLayer)) {
+        if (!nn.synapses.hasOwnProperty(synapseLayer)) { console.log("super uh oh") //the console.log's in this area are for me debugging why synapses do not fill out the anything except the first layer.
             continue;
         }
+        console.log("1")
         for (var synapseNode in nn.synapses[synapseLayer]) {
-            if (!nn.synapses[synapseLayer].hasOwnProperty(synapseNode) || typeof(nn.synapses[synapseLayer][synapseNode]) == "number") {
+            if (!nn.synapses[synapseLayer].hasOwnProperty(synapseNode) || typeof(nn.synapses[synapseLayer][synapseNode]) == "number") { console.log("uh oh")
                 continue;
             }
+            
             nn.synapses[synapseLayer][synapseNode] = deepClone(nn.hLayers);
+            console.log("I'm working!")
             //the split
+            
+            //makes output synapses leading from the node.
+        nn.synapses[synapseLayer][synapseNode].outputs = {};
+           for(var outputSynapse in nn.outputs) {
+               if (!nn.outputs.hasOwnProperty(outputSynapse)) {
+                   continue;
+               }
+               nn.synapses[synapseLayer][synapseNode].outputs[outputSynapse] = {
+                   synapse: pnrand()
+               };
+           
+           }
+            
+            
             
             for (var nextLayer in nn.synapses[synapseLayer][synapseNode]) {
                 if (!nn.hLayers.hasOwnProperty(nextLayer) || nn.synapses[synapseLayer][synapseNode][nextLayer].layerNumber <= nn.synapses[synapseLayer].layerNumber) {
-                    delete nn.synapses[synapseLayer][synapseNode][nextLayer];
-                    continue;
+                    if (typeof(nn.synapses[synapseLayer][synapseNode][nextLayer].outputs) !== 'undefined'){
+                        delete nn.synapses[synapseLayer][synapseNode][nextLayer];
+                    }
+                continue;
                 }
                 
                 for (var nextNode in nn.synapses[synapseLayer][synapseNode][nextLayer]) {
