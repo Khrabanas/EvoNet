@@ -199,20 +199,20 @@ function buildNet(hnCount, hlCount) {
             continue;
         }
         for (var synapseNode in nn.synapses[synapseLayer]) {
-            if (!nn.synapses[synapseLayer].hasOwnProperty(synapseNode)) {
+            if (!nn.synapses[synapseLayer].hasOwnProperty(synapseNode) || typeof(nn.synapses[synapseLayer][synapseNode]) == "number") {
                 continue;
             }
             nn.synapses[synapseLayer][synapseNode] = deepClone(nn.hLayers);
             //the split
             
             for (var nextLayer in nn.synapses[synapseLayer][synapseNode]) {
-                if (!nn.hLayers.hasOwnProperty(nextLayer) && nn.synapses[synapseLayer][synapseNode][nextLayer].layerNumber <= nn.synapses[synapseLayer].layerNumber) {
+                if (!nn.hLayers.hasOwnProperty(nextLayer) || nn.synapses[synapseLayer][synapseNode][nextLayer].layerNumber <= nn.synapses[synapseLayer].layerNumber) {
                     delete nn.synapses[synapseLayer][synapseNode][nextLayer];
                     continue;
                 }
                 
-                for (var nextNode in nn.hLayers[nextLayer]) {
-                    if (!nn.hLayers[nextLayer].hasOwnProperty(nextNode)) {
+                for (var nextNode in nn.synapses[synapseLayer][synapseNode][nextLayer]) {
+                    if (!nn.synapses[synapseLayer][synapseNode][nextLayer].hasOwnProperty(nextNode)) {
                         continue;
                     }
                     
