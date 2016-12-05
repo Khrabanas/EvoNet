@@ -17,7 +17,7 @@ return xorRandom();
 }
 // pos/neg random, used for NN connections.
 function pnrand() {
-    return rand()*2 - 1;
+	return rand()*2 - 1;
 }
 //this function clones an array or object or whatever, so do not say theArrayIWant.somePartOfIt = otherArray, instead have theArrayIWant.somePartOfIt = deepClone(otherArray)
 function deepClone(a) {
@@ -39,9 +39,9 @@ function newPop(hnCount, hlCount, popCount) {
   //clearCanvas();
 
   for(var i=0; i<popCount; i++){
-    pop[i]=buildNet(hnCount, hlCount, i, rand()*canvas.width, rand()*canvas.height);
-    //ctx.fillStyle="rgb("+2.55*pop[i].diet + ",0," + 255/pop[i].diet + ")";
-    //ctx.fillText(i,pop[i].xPos,pop[i].yPos);
+	pop[i]=buildNet(hnCount, hlCount, i, rand()*canvas.width, rand()*canvas.height);
+	//ctx.fillStyle="rgb("+2.55*pop[i].diet + ",0," + 255/pop[i].diet + ")";
+	//ctx.fillText(i,pop[i].xPos,pop[i].yPos);
   }
 
 }
@@ -50,7 +50,7 @@ var plants = [];
 function newHabitat(plantCount) {
   plants = [];
   for (var i=0; i<plantCount;i++ ){
-    makePlant(i, 10, rand()*canvas.width, rand()*canvas.height);
+	makePlant(i, 10, rand()*canvas.width, rand()*canvas.height);
   }
 
 }
@@ -61,66 +61,66 @@ function poputat(popCount) {
 }
 function makePlant(arrayPos, cal, posX, posY) {
   plants[arrayPos] = {
-    cal:cal,
-    posX:posX,
-    posY:posY,
+	cal:cal,
+	posX:posX,
+	posY:posY,
 
   };
 }
 //eye configuration should be this. labeled this way so that A syncs up with 0rad (B with PI/2, etc).
-//    B
+//	B
 //
 //C   +   A (head/forward direction)=>>>
 //
-//    D
+//	D
 //I need to turn up down left right into a b c d. MUUUCH LESS CONFUSING.
 
 //merely iterates at some amount of time. 1000 = 1 second per iteration.
 
 function run(msecs) {
-    if (running === true){
-        console.log("Error in function: 'run', Time is already passing, use stop and run again.");
-        return;
-    }
-    time = setInterval(msecs, iterate);
-    running = true;
+	if (running === true){
+		console.log("Error in function: 'run', Time is already passing, use stop and run again.");
+		return;
+	}
+	time = setInterval(msecs, iterate);
+	running = true;
 }
 function stop() {
-    if (running === false) {
-        console.log("Error in fuction: 'stop', Already stopped.");
-    }
-    clearInterval(time);
-    running = false;
+	if (running === false) {
+		console.log("Error in fuction: 'stop', Already stopped.");
+	}
+	clearInterval(time);
+	running = false;
 }
 //each step of the simulation is contained in an iteration.
 //PROBLEM I NEED TO FIX: Make it so that they only move after every network has analyzed the current setup.
 function iterate() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   for(var i=0;i<pop.length;i++) {
-    var net = pop[i];
-    rotEyes(net);
-    addProxes(net);
+	var net = pop[i];
+	rotEyes(net);
+	addProxes(net);
 
-    readNet(net);
+	readNet(net);
 
-    ctx.fillStyle="rgb("+ Math.floor(2.55*net.diet) + "," + Math.floor(255/net.diet) + ",0,)";
+	ctx.fillStyle="rgb("+ Math.floor(2.55*net.diet) + "," + Math.floor(255/net.diet) + ",0,)";
 
   }
   for(i = 0; i < pop.length; i++) {
 
-      if (canvas.width < pop[i].xPos || 0 > pop[i].xPos || canvas.height < pop[i].yPos || 0 > pop[i].yPos) {
-          pop[i] = makeNet(i, rand() * canvas.width, rand() * canvas.height);
-      }
+	  if (canvas.width < pop[i].xPos || 0 > pop[i].xPos || canvas.height < pop[i].yPos || 0 > pop[i].yPos) {
+		  pop[i] = makeNet(i, rand() * canvas.width, rand() * canvas.height);
+	  }
 
-      moveNet(pop[i]);
-      rotEyes(pop[i]);
-      addProxes(pop[i]);
+	  moveNet(pop[i]);
+	  rotEyes(pop[i]);
+	  addProxes(pop[i]);
 
-      ctx.fillText(i, pop[i].xPos, pop[i].yPos);
-      ctx.fillText("U", pop[i].eyeUpX, pop[i].eyeUpY);
-      ctx.fillText("D", pop[i].eyeDownX, pop[i].eyeDownY);
-      ctx.fillText("L", pop[i].eyeLeftX, pop[i].eyeLeftY);
-      ctx.fillText("R", pop[i].eyeRightX, pop[i].eyeRightY);
+	  ctx.fillText(i, pop[i].xPos, pop[i].yPos);
+	  ctx.fillText("U", pop[i].eyeUpX, pop[i].eyeUpY);
+	  ctx.fillText("D", pop[i].eyeDownX, pop[i].eyeDownY);
+	  ctx.fillText("L", pop[i].eyeLeftX, pop[i].eyeLeftY);
+	  ctx.fillText("R", pop[i].eyeRightX, pop[i].eyeRightY);
 
 
   }
@@ -129,19 +129,19 @@ function iterate() {
 
 //takes the "speed value" from the network and turns it into a distance traveled within my parameters.
 function moveNet(net) {
-    net.xPos = net.xPos - (net.speed * Math.cos(net.rot))/2;
-    net.yPos = net.yPos - (net.speed * Math.sin(net.rot))/2;
+	net.xPos = net.xPos - (net.speed * Math.cos(net.rot))/2;
+	net.yPos = net.yPos - (net.speed * Math.sin(net.rot))/2;
 }
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
 var inputStore = {
-    up:{value:0},
-    down:{value:0},
-    left:{value:0},
-    right:{value:0},
+	up:{value:pnrand()},
+	down:{value:pnrand()},
+	left:{value:pnrand()},
+	right:{value:pnrand()},
 };
 var outputStore = {
-    rot:{value:0},
-    speed:{value:0},
+	rot:{value:0},
+	speed:{value:0},
 };
 //this function sets the parameters of a neural network. For instance: Do I want 3 hidden nodes and 2 layers, or maybe 2 hidden nodes and 6 layers?
 //How it should work:
@@ -150,109 +150,106 @@ var outputStore = {
 //nn.synapses is specifically for the synapses leading from the hidden nodes to the other hidden nodes and the ouputs.
 //nn.hLayers is the simple structure of the neural network, as well as the values for the nodes. No synapses should be stored here.
 function buildNet(hnCount, hlCount) {
-    var nn = {}; //new net
-    nn.hLayers = {};
-    nn.inputs = inputStore;
-    nn.outputs = outputStore;
-    for (var i = 0; i < hlCount; i++) {
-      var lID = "layer"+i;
-        nn.hLayers[lID] = {
-            layerNumber: i
-        };
-        for (var j = 0; j < hnCount; j++) {
-          var nID = "node"+j;
-            nn.hLayers[lID][nID] = {
-                nodeNumber: j,
-                value:0 //this is merely the start value. it will change eveytime it updates.
-            };
-        }
-    }
-    for (var input in nn.inputs) {
-        if (!nn.inputs.hasOwnProperty(input)) {
-            continue;
-        }
-        //probably don't need to store this multiple times, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
-        nn.inputs[input] = deepClone(nn.hLayers);
-        nn.inputs[input].value = 0;
-        
-        for(var output in nn.outputs) {
-            if (!nn.outputs.hasOwnProperty(output)) {
-                continue;
-            }
-            nn.inputs[input][output] = {synapse:pnrand()};
-            
-        }
-        //input is a,b,c,d.
-        //layer is layer1,layer2, etc.
-        //node is node0,node3, etc
-        //so, accessing the lowest synapse of the inputs is: "nn.inputs.a.layer0.node0.synapse"
+	var nn = {}; //new net
+	nn.hLayers = {};
+	nn.inputs = inputStore;
+	nn.outputs = outputStore;
+	for (var i = 0; i < hlCount; i++) {
+	  var lID = "layer"+i;
+		nn.hLayers[lID] = {
+			layerNumber: i
+		};
+		for (var j = 0; j < hnCount; j++) {
+		  var nID = "node"+j;
+			nn.hLayers[lID][nID] = {
+				nodeNumber: j,
+				value:0 //this is merely the start value. it will change eveytime it updates.
+			};
+		}
+	}
+	for (var input in nn.inputs) {
+		if (!nn.inputs.hasOwnProperty(input)) {
+			continue;
+		}
+		//probably don't need to store this multiple times, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
+		nn.inputs[input] = deepClone(nn.hLayers);
+		nn.inputs[input].value = 0;
+		
+		for(var output in nn.outputs) {
+			if (!nn.outputs.hasOwnProperty(output)) {
+				continue;
+			}
+			nn.inputs[input][output] = {synapse:pnrand()};
+			
+		}
+		//input is a,b,c,d.
+		//layer is layer1,layer2, etc.
+		//node is node0,node3, etc
+		//so, accessing the lowest synapse of the inputs is: "nn.inputs.a.layer0.node0.synapse"
 
-        for (var layer in nn.inputs[input]) {
-            if (!nn.inputs[input].hasOwnProperty(layer)) {
-                continue;
-            }
+		for (var layer in nn.inputs[input]) {
+			if (!nn.inputs[input].hasOwnProperty(layer)) {
+				continue;
+			}
 
-            for (var node in nn.inputs[input][layer]) {
-                if (!nn.inputs[input][layer].hasOwnProperty(node)) {
-                    continue;
-                }
-                nn.inputs[input][layer][node].synapse = pnrand();
+			for (var node in nn.inputs[input][layer]) {
+				if (!nn.inputs[input][layer].hasOwnProperty(node)) {
+					continue;
+				}
+				nn.inputs[input][layer][node].synapse = pnrand();
 
-            }
-        }
-    }
-    
-    nn.synapses = deepClone(nn.hLayers);
-    for (var synapseLayer in nn.synapses) {
-        if (!nn.synapses.hasOwnProperty(synapseLayer)) { console.log("super uh oh") //the console.log's in this area are for me debugging why synapses do not fill out the anything except the first layer.
-            continue;
-        }
-        console.log("1")
-        for (var synapseNode in nn.synapses[synapseLayer]) {
-            if (!nn.synapses[synapseLayer].hasOwnProperty(synapseNode) || typeof(nn.synapses[synapseLayer][synapseNode]) == "number") { console.log("uh oh")
-                continue;
-            }
-            
-            nn.synapses[synapseLayer][synapseNode] = deepClone(nn.hLayers);
-            console.log("I'm working!")
-            //the split
-            
-            //makes output synapses leading from the node.
-        nn.synapses[synapseLayer][synapseNode].outputs = {};
-           for(var outputSynapse in nn.outputs) {
-               if (!nn.outputs.hasOwnProperty(outputSynapse)) {
-                   continue;
-               }
-               nn.synapses[synapseLayer][synapseNode].outputs[outputSynapse] = {
-                   synapse: pnrand()
-               };
-           
-           }
-            
-            
-            
-            for (var nextLayer in nn.synapses[synapseLayer][synapseNode]) {
-                if (!nn.hLayers.hasOwnProperty(nextLayer) || nn.synapses[synapseLayer][synapseNode][nextLayer].layerNumber <= nn.synapses[synapseLayer].layerNumber) {
-                    if (typeof(nn.synapses[synapseLayer][synapseNode][nextLayer].outputs) !== 'undefined'){
-                        delete nn.synapses[synapseLayer][synapseNode][nextLayer];
-                    }
-                continue;
-                }
-                
-                for (var nextNode in nn.synapses[synapseLayer][synapseNode][nextLayer]) {
-                    if (!nn.synapses[synapseLayer][synapseNode][nextLayer].hasOwnProperty(nextNode)) {
-                        continue;
-                    }
-                    
-                    nn.synapses[synapseLayer][synapseNode][nextLayer][nextNode].value = pnrand();
-                
-                
-                }
-            }
-        }
-
-        return nn;
-    }
+			}
+		}
+	}
+	
+	nn.synapses = deepClone(nn.hLayers);
+	for (var synapseLayer in nn.synapses) {
+		if (!nn.synapses.hasOwnProperty(synapseLayer)) { //the console.log's in this area are for me debugging why synapses do not fill out the anything except the first layer.
+			continue;
+		}
+		for (var synapseNode in nn.synapses[synapseLayer]) {
+			if (!nn.synapses[synapseLayer].hasOwnProperty(synapseNode) || typeof(nn.synapses[synapseLayer][synapseNode]) == "number") {
+				
+				continue;
+			}
+	
+			nn.synapses[synapseLayer][synapseNode] = deepClone(nn.hLayers);
+				//the split
+			//makes output synapses leading from the node.
+			
+			
+	
+			for (var nextLayer in nn.synapses[synapseLayer][synapseNode]) {
+				if (!nn.hLayers.hasOwnProperty(nextLayer) || nn.synapses[synapseLayer][synapseNode][nextLayer].layerNumber <= nn.synapses[synapseLayer].layerNumber) {
+				
+					delete nn.synapses[synapseLayer][synapseNode][nextLayer];
+				
+					continue;
+				}
+	
+				for (var nextNode in nn.synapses[synapseLayer][synapseNode][nextLayer]) {
+				    if (!nn.synapses[synapseLayer][synapseNode][nextLayer].hasOwnProperty(nextNode)) {
+				        continue;
+				    }
+				
+				    nn.synapses[synapseLayer][synapseNode][nextLayer][nextNode].value = pnrand();
+				
+				
+				}
+			}
+			nn.synapses[synapseLayer][synapseNode].outputs = {};
+			for (var outputSynapse in nn.outputs) {
+				if (!nn.outputs.hasOwnProperty(outputSynapse)) {
+					continue;
+				}
+				nn.synapses[synapseLayer][synapseNode].outputs[outputSynapse] = {
+					synapse: pnrand()
+				};
+			}
+		}
+	}
+	
+	return nn;
 }
 
 function makeOrganism(hnCount, hlCount, netHome, x, y, rot) {
@@ -268,44 +265,52 @@ function makeOrganism(hnCount, hlCount, netHome, x, y, rot) {
   return org;
 }
 //a network thinking.
-function readNet(net) {
-    for(var layer in nn.hLayers) {
-        if (!nn.inputs.hasOwnProperty(input)) {
-            continue;
-        }
-        for (var node in nn.hLayers[layer]) {
-            //the split between the node it goes to^ and the node it comes from \/
+function readNet(net) {  WORKING ON THIS RIGHT NOW
+//WARNING: nn.output.value only becomes a good value after it has been divided by the number of synapses connecting to it.
 
-            var sum = 0;
-            var sumCount = 0;
-            //lines leading from inputs to node.
-
-            for (var input in nn.inputs) {
-                if (!nn.inputs.hasOwnProperty(input)) {
-                    continue;
-                }
-                sum += nn.inputs[input][layer][node].synapse * nn.inputs[input].value;
-                sumCount++;
-            }
-            //nn.inputs.a.layer0.node0.synapse
-            for (var prevLayer in nn.hLayers) {
-                if (!nn.hLayers.hasOwnProperty(prevLayer) && prevLayer.layerNumber >= layer.layerNumber) {
-                    continue;
-                }
-
-                for (var prevNode in nn.hLayers[prevLayer]) {
-
-                    if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode)) {
-                        continue;
-                    }
-                    sum += nn.synapses[prevLayer][prevNode].synapse * nn.hLayers[prevLayer][prevNode].value;
-                }
-            }
-
-            nn.hLayers[layer][node].value = sum / sumCount;
-        }
-
+    for (var output in nn.outputs) {
+    nn[output]value = 0;
     }
+    
+    for (var input in nn.inputs) {
+        
+    }
+	for(var layer in nn.hLayers) {
+		if (!nn.inputs.hasOwnProperty(input)) {
+			continue;
+		}
+		for (var node in nn.hLayers[layer]) {
+			//the split between the node it goes to^ and the node it comes from \/
+
+
+			//lines leading from inputs to node.
+
+			for (var input in nn.inputs) {
+				if (!nn.inputs.hasOwnProperty(input)) {
+					continue;
+				}
+				sum += nn.inputs[input][layer][node].synapse * nn.inputs[input].value;
+				sumCount++;
+			}
+			//nn.inputs.a.layer0.node0.synapse
+			for (var prevLayer in nn.hLayers) {
+				if (!nn.hLayers.hasOwnProperty(prevLayer) && prevLayer.layerNumber >= layer.layerNumber) {
+					continue;
+				}
+
+				for (var prevNode in nn.hLayers[prevLayer]) {
+
+					if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode)) {
+						continue;
+					}
+					sum += nn.synapses[prevLayer][prevNode].synapse * nn.hLayers[prevLayer][prevNode].value;
+				}
+			}
+
+			nn.hLayers[layer][node].value = sum / sumCount;
+		}
+
+	}
 
 }
 
@@ -345,14 +350,14 @@ function addProxes(net) {
 function getProx(net,sPosX, sPosY) {
   var closest=Infinity;
   for(i=0;i<pop.length;i++){
-    var distance = findDis(sPosX,sPosY, pop[i].xPos, pop[i].yPos);
-    if (i != net && distance <= closest) {
-    closest = findDis(sPosX,sPosY, pop[i].xPos,pop[i].yPos);
-    }
+	var distance = findDis(sPosX,sPosY, pop[i].xPos, pop[i].yPos);
+	if (i != net && distance <= closest) {
+	closest = findDis(sPosX,sPosY, pop[i].xPos,pop[i].yPos);
+	}
   }
 
   if(Math.sqrt(closest) < 200){
-    return Math.sqrt(closest);
+	return Math.sqrt(closest);
   } else {
   return 0;
 }
