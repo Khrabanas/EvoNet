@@ -23,9 +23,10 @@ function pnrand() {
 function deepClone(a) {
   return JSON.parse(JSON.stringify(a));
 }
-
-canvas.width=1000;
-canvas.height=1000;
+worldW = 1000;
+worldH = 1000;
+canvas.width = worldW;
+canvas.height = worldH;
 ctx.font = "10px Arial";
 
 function clearCanvas() {
@@ -254,14 +255,29 @@ function buildNet(hnCount, hlCount) {
 	
 	return nn;
 }
+function decideGender() {
+    if (rand() < 0.5) {
+        return 'male';
+    } else {
+        return 'female';
+    }
+}
 
-function makeOrganism(hnCount, hlCount, netHome, x, y, rot) {
+function getColor(value){
+    //value from 0 to 1
+    var hue=((1-value)*360).toString(10);
+    return ["hsl(",hue,",100%,50%)"].join("");
+}
+
+
+//makeOrg(4, 3, decideGender(), rand(), i, rand()*worldW, rand*worldH, rand*2*Math.PI)
+function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot) {
   var org = {};
   org.x = x;
   org.y = y;
   org.rot = rot;
 
-  org.color = 1;
+  org.color = color;
 
   org.nn = buildNet(hnCount, hlCount);
 
