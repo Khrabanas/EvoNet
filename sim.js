@@ -280,18 +280,18 @@ function readNet(nn) {
 			    if (!nn.inputs.hasOwnProperty(input)) {
 				    continue;
 			    }
-			    nn.hLayers[layer][node].value += nn.inputs[input][layer][node].synapse;
+			    nn.hLayers[layer][node].value += nn.inputs[input][layer][node].synapse * nn.inputs[input].value;
 			}
 			
 			for (var prevLayer in nn.hLayers) {
-		        if (!nn.hLayers.hasOwnProperty(prevLayer) || nn.hLayers[layer].layerNumber <= nn.hLayer[prevLayer].layerNumber) {
+		        if (!nn.hLayers.hasOwnProperty(prevLayer) || nn.hLayers[layer].layerNumber <= nn.hLayer[prevLayer].layerNumber || typeof(nn.hLayer[prevLayer].layerNumber) == "number") {
 		            continue;
 		        }
 		        for (var prevNode in nn.hLayers[prevLayer]) {
-		            if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode)) {
+		            if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode) || typeof(nn.hLayer[prevLayer][prevNode].nodeNumber) == "number") {
 				        continue;
 			        }
-			        
+			        nn.hLayers[layer][node].value += nn.synapses[prevLayer][prevNode][layer][node].value * nn.hLayers[prevLayer][prevNode].value
 		            
 		        }
 			}
