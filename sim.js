@@ -158,7 +158,7 @@ function buildNet(hnCount, hlCount) {
 	  var lID = "layer"+i;
 		nn.hLayers[lID] = {
 			layerNumber: i,
-			numOfPrevNodes: (hlCount - i) * hnCount + Object.keys(inputStore).length;
+			numOfPrevNodes: i * hnCount + Object.keys(inputStore).length,
 		};
 		for (var j = 0; j < hnCount; j++) {
 		  var nID = "node"+j;
@@ -174,7 +174,7 @@ function buildNet(hnCount, hlCount) {
 		}
 		//probably don't need to store this multiple times, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
 		nn.inputs[input] = deepClone(nn.hLayers);
-		nn.inputs[input].value = deepClone(inputStore[input].value);
+		nn.inputs[input].value = inputStore[input].value;
 		
 		for(var output in nn.outputs) {
 			if (!nn.outputs.hasOwnProperty(output)) {
@@ -266,14 +266,34 @@ function makeOrganism(hnCount, hlCount, netHome, x, y, rot) {
   return org;
 }
 //a network thinking.
-function readNet(nn) {  
+function readNet(nn) {
 	for(var layer in nn.hLayers) {
 		if (!nn.hLayers.hasOwnProperty(layer)) {
 			continue;
 		}
-		for(node in nn.hLayers[layer]) {
+		for(var node in nn.hLayers[layer]) {
 			if (!nn.hLayers[layer].hasOwnProperty(node)) {
 				continue;
+			}
+			nn.hLayers[layer][node].value = 0;
+			for (var input in nn.inputs){
+			    if (!nn.inputs.hasOwnProperty(input)) {
+				    continue;
+			    }
+			    nn.hLayers[layer][node].value += nn.inputs[input][layer][node].synapse;
+			}
+			
+			for (var prevLayer in nn.hLayers) {
+		        if (!nn.hLayers.hasOwnProperty(prevLayer) || nn.hLayers[layer].layerNumber <= nn.hLayer[prevLayer].layerNumber) {
+		            continue;
+		        }
+		        for (var prevNode in nn.hLayers[prevLayer]) {
+		            if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode)) {
+				        continue;
+			        }
+			        
+		            
+		        }
 			}
 			
 		}
