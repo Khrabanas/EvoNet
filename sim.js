@@ -152,8 +152,8 @@ var outputStore = {
 function buildNet(hnCount, hlCount) {
 	var nn = {}; //new net
 	nn.hLayers = {};
-	nn.inputs = inputStore;
-	nn.outputs = outputStore;
+	nn.inputs = deepClone(inputStore);
+	nn.outputs = deepClone(outputStore);
 	for (var i = 0; i < hlCount; i++) {
 	  var lID = "layer"+i;
 		nn.hLayers[lID] = {
@@ -268,31 +268,35 @@ function makeOrganism(hnCount, hlCount, netHome, x, y, rot) {
 //a network thinking.
 function readNet(nn) {
 	for(var layer in nn.hLayers) {
-		if (!nn.hLayers.hasOwnProperty(layer)) {
+		if (!nn.hLayers.hasOwnProperty(layer) || typeof(nn.hLayers[layer].layerNumber) !== "number") {
 			continue;
 		}
 		for(var node in nn.hLayers[layer]) {
-			if (!nn.hLayers[layer].hasOwnProperty(node)) {
+			if (!nn.hLayers[layer].hasOwnProperty(node) || typeof(nn.hLayers[layer][node].nodeNumber) !== "number" ) {
 				continue;
 			}
 			nn.hLayers[layer][node].value = 0;
+			console.log(nn.hLayers[layer][node].value);
 			for (var input in nn.inputs){
 			    if (!nn.inputs.hasOwnProperty(input)) {
-				    continue;
+			        continue;
 			    }
+			    console.log(nn.inputs[input].value)
+			    
 			    nn.hLayers[layer][node].value += nn.inputs[input][layer][node].synapse * nn.inputs[input].value;
-			}
 			
+			    console.log(nn.hLayers[layer][node].value)
+			}
 			for (var prevLayer in nn.hLayers) {
-		        if (!nn.hLayers.hasOwnProperty(prevLayer) || nn.hLayers[layer].layerNumber <= nn.hLayer[prevLayer].layerNumber || typeof(nn.hLayer[prevLayer].layerNumber) == "number") {
+		        if (!nn.hLayers.hasOwnProperty(prevLayer) || nn.hLayers[layer].layerNumber <= nn.hLayers[prevLayer].layerNumber || typeof(nn.hLayers[prevLayer].layerNumber) !== "number") {
 		            continue;
 		        }
 		        for (var prevNode in nn.hLayers[prevLayer]) {
-		            if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode) || typeof(nn.hLayer[prevLayer][prevNode].nodeNumber) == "number") {
+		            if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode) || typeof(nn.hLayers[prevLayer][prevNode].nodeNumber) !== "number") {
 				        continue;
 			        }
-			        nn.hLayers[layer][node].value += nn.synapses[prevLayer][prevNode][layer][node].value * nn.hLayers[prevLayer][prevNode].value
-		            
+			        nn.hLayers[layer][node].value += nn.synapses[prevLayer][prevNode][layer][node].value * nn.hLayers[prevLayer][prevNode].value;
+		            nn.hLayers[layer][node].value /= nn.hLayers[layer].numOfPrevNodes;
 		        }
 			}
 			
