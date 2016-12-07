@@ -157,7 +157,8 @@ function buildNet(hnCount, hlCount) {
 	for (var i = 0; i < hlCount; i++) {
 	  var lID = "layer"+i;
 		nn.hLayers[lID] = {
-			layerNumber: i
+			layerNumber: i,
+			numOfPrevNodes: (hlCount - i) * hnCount + Object.keys(inputStore).length;
 		};
 		for (var j = 0; j < hnCount; j++) {
 		  var nID = "node"+j;
@@ -274,6 +275,7 @@ function readNet(nn) {
 			if (!nn.hLayers[layer].hasOwnProperty(node)) {
 				continue;
 			}
+			
 		}
 	}
 
