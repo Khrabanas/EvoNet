@@ -207,7 +207,7 @@ function buildNet(hnCount, hlCount) {
 	
 	nn.synapses = deepClone(nn.hLayers);
 	for (var synapseLayer in nn.synapses) {
-		if (!nn.synapses.hasOwnProperty(synapseLayer)) { //the console.log's in this area are for me debugging why synapses do not fill out the anything except the first layer.
+		if (!nn.synapses.hasOwnProperty(synapseLayer)) {
 			continue;
 		}
 		for (var synapseNode in nn.synapses[synapseLayer]) {
@@ -278,7 +278,7 @@ function readNet(nn) {
 				continue;
 			}
 			nn.hLayers[layer][node].value = 0;
-			console.log(nn.hLayers[layer][node].value);
+			
 			for (var input in nn.inputs){
 			    if (!nn.inputs.hasOwnProperty(input)) {
 			        continue;
@@ -304,18 +304,33 @@ function readNet(nn) {
 	
     for (var output in nn.outputs) {
         if (!nn.outputs.hasOwnProperty(output)) {
-           continue;
-	    }
-	    for (var inputOut in nn.inputs) {
-	        if (!nn.inputs.hasOwnProperty(inputOut)) {
-	            continue;
-	        }
-	        for (var outs in nn.inputs[inputOut]) {
-	            if (!nn.inputs[inputOuts]hasOwnProperty(outs) || typeof(nn.inputs[inputOut][outs].synapse) !== "number") {
-	                continue;
-	            }
-	        }
-	    }
+            continue;
+        }
+        for (var inputOut in nn.inputs) {
+            if (!nn.inputs.hasOwnProperty(inputOut)) {
+                continue;
+            }
+            for (var outs in nn.inputs[inputOut]) {
+                if (!nn.inputs[inputOut].hasOwnProperty(outs) || typeof(nn.inputs[inputOut][outs].synapse) !== "number") {
+                    continue;
+                }
+                nn.outputs[output].value += nn.inputs[inputOut][outs].synapse * nn.inputs[inputOut].value;
+            }
+        }
+        
+        for (var layerOut in nn.hLayers) {
+            if (!nn.hLayers.hasOwnProperty(layerOut) || typeof(nn.hLayers[layerOut].layerNumber) == "number") {
+                continue;
+            }
+            
+            for (var nodeOut in nn.hLayers[layerOut]){
+                if (!nn.hLayers[layerOut].hasOwnProperty(nodeOut) || typeof(nn.hLayers[layerOut][nodeOut].nodeNumber) == "number") {
+                    continue;
+                }
+                nn.outputs[output].value += nn.hLayers[layerOut][nodeOut].value * nn.synapses[layerOut][nodeOut].ouputs[output].synapse;
+                nn.outputs[output].value /= nn.hLayers.totalNumberOfNodes;
+            }
+        }
     }
 }
 
