@@ -154,11 +154,13 @@ function buildNet(hnCount, hlCount) {
 	nn.hLayers = {};
 	nn.inputs = deepClone(inputStore);
 	nn.outputs = deepClone(outputStore);
+	var inputLength = Object.keys(inputStore).length;
+	nn.hLayers.totalNumberOfNodes = hnCount * hlCount  + inputLength;
 	for (var i = 0; i < hlCount; i++) {
 	  var lID = "layer"+i;
 		nn.hLayers[lID] = {
 			layerNumber: i,
-			numOfPrevNodes: i * hnCount + Object.keys(inputStore).length,
+			numOfPrevNodes: i * hnCount + inputLength,
 		};
 		for (var j = 0; j < hnCount; j++) {
 		  var nID = "node"+j;
@@ -281,11 +283,8 @@ function readNet(nn) {
 			    if (!nn.inputs.hasOwnProperty(input)) {
 			        continue;
 			    }
-			    console.log(nn.inputs[input].value)
 			    
 			    nn.hLayers[layer][node].value += nn.inputs[input][layer][node].synapse * nn.inputs[input].value;
-			
-			    console.log(nn.hLayers[layer][node].value)
 			}
 			for (var prevLayer in nn.hLayers) {
 		        if (!nn.hLayers.hasOwnProperty(prevLayer) || nn.hLayers[layer].layerNumber <= nn.hLayers[prevLayer].layerNumber || typeof(nn.hLayers[prevLayer].layerNumber) !== "number") {
@@ -302,7 +301,22 @@ function readNet(nn) {
 			
 		}
 	}
-
+	
+    for (var output in nn.outputs) {
+        if (!nn.outputs.hasOwnProperty(output)) {
+           continue;
+	    }
+	    for (var inputOut in nn.inputs) {
+	        if (!nn.inputs.hasOwnProperty(inputOut)) {
+	            continue;
+	        }
+	        for (var outs in nn.inputs[inputOut]) {
+	            if (!nn.inputs[inputOuts]hasOwnProperty(outs) || typeof(nn.inputs[inputOut][outs].synapse) !== "number") {
+	                continue;
+	            }
+	        }
+	    }
+    }
 }
 
 
