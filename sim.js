@@ -173,7 +173,7 @@ function buildNet(hnCount, hlCount) {
 		}
 		//probably don't need to store this multiple times, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
 		nn.inputs[input] = deepClone(nn.hLayers);
-		nn.inputs[input].value = 0;
+		nn.inputs[input].value = deepClone(inputStore[input].value);
 		
 		for(var output in nn.outputs) {
 			if (!nn.outputs.hasOwnProperty(output)) {
@@ -265,51 +265,16 @@ function makeOrganism(hnCount, hlCount, netHome, x, y, rot) {
   return org;
 }
 //a network thinking.
-function readNet(net) {  WORKING ON THIS RIGHT NOW
-//WARNING: nn.output.value only becomes a good value after it has been divided by the number of synapses connecting to it.
-
-    for (var output in nn.outputs) {
-    nn[output]value = 0;
-    }
-    
-    for (var input in nn.inputs) {
-        
-    }
+function readNet(nn) {  
 	for(var layer in nn.hLayers) {
-		if (!nn.inputs.hasOwnProperty(input)) {
+		if (!nn.hLayers.hasOwnProperty(layer)) {
 			continue;
 		}
-		for (var node in nn.hLayers[layer]) {
-			//the split between the node it goes to^ and the node it comes from \/
-
-
-			//lines leading from inputs to node.
-
-			for (var input in nn.inputs) {
-				if (!nn.inputs.hasOwnProperty(input)) {
-					continue;
-				}
-				sum += nn.inputs[input][layer][node].synapse * nn.inputs[input].value;
-				sumCount++;
+		for(node in nn.hLayers[layer]) {
+			if (!nn.hLayers[layer].hasOwnProperty(node)) {
+				continue;
 			}
-			//nn.inputs.a.layer0.node0.synapse
-			for (var prevLayer in nn.hLayers) {
-				if (!nn.hLayers.hasOwnProperty(prevLayer) && prevLayer.layerNumber >= layer.layerNumber) {
-					continue;
-				}
-
-				for (var prevNode in nn.hLayers[prevLayer]) {
-
-					if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode)) {
-						continue;
-					}
-					sum += nn.synapses[prevLayer][prevNode].synapse * nn.hLayers[prevLayer][prevNode].value;
-				}
-			}
-
-			nn.hLayers[layer][node].value = sum / sumCount;
 		}
-
 	}
 
 }
