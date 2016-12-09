@@ -135,10 +135,11 @@ function moveNet(net) {
 }
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
 var inputStore = {
-	up:{value:pnrand()},
-	down:{value:pnrand()},
-	left:{value:pnrand()},
-	right:{value:pnrand()},
+    //eLL1 = eyeLineLeftnumber1, eLRight2 etc.
+	eLL1:{value:pnrand()},
+	eLL2:{value:pnrand()},
+	eLR1:{value:pnrand()},
+	dLR2:{value:pnrand()},
 };
 var outputStore = {
 	rot:{value:0},
@@ -192,7 +193,7 @@ function buildNet(hnCount, hlCount) {
 		//so, accessing the lowest synapse of the inputs is: "nn.inputs.a.layer0.node0.synapse"
 
 		for (var layer in nn.inputs[input]) {
-			if (!nn.inputs[input].hasOwnProperty(layer)) {
+			i0f (!nn.inputs[input].hasOwnProperty(layer)) {
 				continue;
 			}
 
@@ -294,13 +295,12 @@ function readNet(nn) {
 				continue;
 			}
 			nn.hLayers[layer][node].value = 0;
-			
 			for (var input in nn.inputs){
 			    if (!nn.inputs.hasOwnProperty(input)) {
 			        continue;
 			    }
 			    
-			    nn.hLayers[layer][node].value += nn.inputs[input][layer][node].synapse * nn.inputs[input].value;
+			    nn.hLayers[layer][node].value += (nn.inputs[input][layer][node].synapse * nn.inputs[input].value)/nn.hLayers.totalNumberOfNodes;
 			}
 			for (var prevLayer in nn.hLayers) {
 		        if (!nn.hLayers.hasOwnProperty(prevLayer) || nn.hLayers[layer].layerNumber <= nn.hLayers[prevLayer].layerNumber || typeof(nn.hLayers[prevLayer].layerNumber) !== "number") {
@@ -310,27 +310,34 @@ function readNet(nn) {
 		            if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode) || typeof(nn.hLayers[prevLayer][prevNode].nodeNumber) !== "number") {
 				        continue;
 			        }
-			        nn.hLayers[layer][node].value += nn.synapses[prevLayer][prevNode][layer][node].value * nn.hLayers[prevLayer][prevNode].value;
-		            nn.hLayers[layer][node].value /= nn.hLayers[layer].numOfPrevNodes;
+			        nn.hLayers[layer][node].value += (nn.synapses[prevLayer][prevNode][layer][node].value * nn.hLayers[prevLayer][prevNode].value)/nn.hLayers[layer].numOfPrevNodes;
+			        console.log(nn.hLayers[layer][node]+"has value"+nn.hLayers[layer][node].value)
+		           // nn.hLayers[layer][node].value /= nn.hLayers[layer].numOfPrevNodes;
 		        }
 			}
 			
 		}
 	}
-	
     for (var output in nn.outputs) {
         if (!nn.outputs.hasOwnProperty(output)) {
             continue;
         }
+        
+        console.log(output + " has val");
+	console.log(nn.outputs[output].value)
         for (var inputOut in nn.inputs) {
             if (!nn.inputs.hasOwnProperty(inputOut)) {
                 continue;
             }
+            console.log(inputOut)
+
             for (var outs in nn.inputs[inputOut]) {
                 if (!nn.inputs[inputOut].hasOwnProperty(outs) || typeof(nn.inputs[inputOut][outs].synapse) !== "number") {
                     continue;
                 }
-                nn.outputs[output].value += nn.inputs[inputOut][outs].synapse * nn.inputs[inputOut].value;
+            console.log(outs)
+                nn.outputs[output].value += (nn.inputs[inputOut][outs].synapse * nn.inputs[inputOut].value)/nn.hLayers.totalNumberOfNodes;
+            console.log(nn.outputs[output].value)
             }
         }
         
@@ -343,10 +350,12 @@ function readNet(nn) {
                 if (!nn.hLayers[layerOut].hasOwnProperty(nodeOut) || typeof(nn.hLayers[layerOut][nodeOut].nodeNumber) == "number") {
                     continue;
                 }
-                nn.outputs[output].value += nn.hLayers[layerOut][nodeOut].value * nn.synapses[layerOut][nodeOut].ouputs[output].synapse;
-                nn.outputs[output].value /= nn.hLayers.totalNumberOfNodes;
+                nn.outputs[output].value += (nn.hLayers[layerOut][nodeOut].value * nn.synapses[layerOut][nodeOut].ouputs[output].synapse)/nn.hLayers.totalNumberOfNodes;
+                
             }
         }
+        console.log("output value is happening" + nn.outputs[output].value)
+      //probably in the wrong place too  nn.outputs[output].value /= nn.hLayers.totalNumberOfNodes;
     }
 }
 
