@@ -136,15 +136,22 @@ function moveNet(net) {
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
 var inputStore = {
     //eLL1 = eyeLineLeftnumber1, eLRight2 etc.
+	eLR1:{value:pnrand()},
+	eLR2:{value:pnrand()},
+	eLR3:{value:pnrand()},
+	eLR4:{value:pnrand()},
+
 	eLL1:{value:pnrand()},
 	eLL2:{value:pnrand()},
-	eLR1:{value:pnrand()},
-	dLR2:{value:pnrand()},
+	eLL3:{value:pnrand()},
+	eLL4:{value:pnrand()},
 };
 var outputStore = {
 	rot:{value:0},
 	speed:{value:0},
 };
+//nn.outputs[output].value
+
 //this function sets the parameters of a neural network. For instance: Do I want 3 hidden nodes and 2 layers, or maybe 2 hidden nodes and 6 layers?
 //How it should work:
 
@@ -256,34 +263,6 @@ function buildNet(hnCount, hlCount) {
 	
 	return nn;
 }
-function decideGender() {
-    if (rand() < 0.5) {
-        return 'male';
-    } else {
-        return 'female';
-    }
-}
-
-function getColor(value){
-    //value from 0 to 1
-    var hue=((1-value)*360).toString(10);
-    return ["hsl(",hue,",100%,50%)"].join("");
-}
-
-
-//makeOrg(4, 3, decideGender(), rand(), i, rand()*worldW, rand*worldH, rand*2*Math.PI)
-function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot) {
-  var org = {};
-  org.x = x;
-  org.y = y;
-  org.rot = rot;
-
-  org.color = color;
-
-  org.nn = buildNet(hnCount, hlCount);
-
-  return org;
-}
 //a network thinking.
 function readNet(nn) {
 	for(var layer in nn.hLayers) {
@@ -311,7 +290,7 @@ function readNet(nn) {
 				        continue;
 			        }
 			        nn.hLayers[layer][node].value += (nn.synapses[prevLayer][prevNode][layer][node].value * nn.hLayers[prevLayer][prevNode].value)/nn.hLayers[layer].numOfPrevNodes;
-			        console.log(nn.hLayers[layer][node]+"has value"+nn.hLayers[layer][node].value)
+			        
 		           // nn.hLayers[layer][node].value /= nn.hLayers[layer].numOfPrevNodes;
 		        }
 			}
@@ -323,21 +302,19 @@ function readNet(nn) {
             continue;
         }
         
-        console.log(output + " has val");
-	console.log(nn.outputs[output].value)
         for (var inputOut in nn.inputs) {
             if (!nn.inputs.hasOwnProperty(inputOut)) {
                 continue;
             }
-            console.log(inputOut)
+            
 
             for (var outs in nn.inputs[inputOut]) {
                 if (!nn.inputs[inputOut].hasOwnProperty(outs) || typeof(nn.inputs[inputOut][outs].synapse) !== "number") {
                     continue;
                 }
-            console.log(outs)
+            
                 nn.outputs[output].value += (nn.inputs[inputOut][outs].synapse * nn.inputs[inputOut].value)/nn.hLayers.totalNumberOfNodes;
-            console.log(nn.outputs[output].value)
+            
             }
         }
         
@@ -354,17 +331,75 @@ function readNet(nn) {
                 
             }
         }
-        console.log("output value is happening" + nn.outputs[output].value)
+
       //probably in the wrong place too  nn.outputs[output].value /= nn.hLayers.totalNumberOfNodes;
     }
 }
+function decideGender() {
+    if (rand() < 0.5) {
+        return 'male';
+    } else {
+        return 'female';
+    }
+}
+
+function getColor(value){
+    //value from 0 to 1
+    var hue=((1-value)*360).toString(10);
+    return ["hsl(",hue,",100%,50%)"].join("");
+}
 
 
+//makeOrg(4, 3, decideGender(), rand(), i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, rand()*Math.PI, rand()*Math.PI, 10, 10) eyePos and breadth should be only positive.
+function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, eyeBreadth, health, hunger) {
+    var org = {};
+    org.x = x;
+    org.y = y;
+    org.rot = rot;
 
+    //morphology
+    org.morph = {};
+    org.morph.color = color;
+    org.morph.gender = gender;
+    org.morph.eye.angle = eyePos;
+    
+    org.radius = 10;
+    //todo: _____!!!! think abot body shape, should it differ with age/health?
+    //current values not associated directly with other stuff like nn or morph.
+    org.health = health;
+    org.hunger
+    //high hunger values good, there will be a max.
+    
+    //in relation to center of head
+    org.morph.eye.breadth = eyeBreadth;
+    getEyes();
+    //in relation to eye.
+    
+    org.nn = buildNet(hnCount, hlCount);
 
+    return org;
+}
 
+function getEyes(org){ //working on this right now.
+    org.morph.eye.pos = {};
+    //center coords are org.x and org.y
+    
+    
 
-
+    org.morph.eye.pos.r = {
+        x: org.x + Math.cos(org.rot - org.eye.pos)*org.radius,
+        y: org.y + Math.sin(org.rot - org.eye.pos)*org.radius,
+    }
+    org.morph.eye.pos.l = {
+        x: org.x + Math.cos(org.rot + org.eye.pos)*org.radius,
+        y: org.y + Math.cos(org.rot + org.eye.pos)*org.radius,
+    }
+    for(i=0, i < 4; i++) {
+        //r = right eye, l is left...
+        org.morph.eye.pos["r" + i]
+        org.morph.eye.pos["l" + i]
+    }
+}
 //finds the placement of each of the eyes from the rot of the creature. in radians.
 function rotEyes(net) {
 
