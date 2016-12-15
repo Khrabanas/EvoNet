@@ -393,7 +393,7 @@ function render() {
     for(var i = 0; i < pop.length; i++) {
         var org = pop[i];
         circle(org.x, org.y, org.radius);
-        ctx.fillText(i, org.x, org.y);
+        ctx.fillText(i, org.x - org.radius/2, org.y + org.radius/2);
         for(var j = 0; j < 4; j++){
 
             //console.log(org.morph.eye.pos.r.x);
