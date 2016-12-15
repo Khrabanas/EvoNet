@@ -35,15 +35,17 @@ function clearCanvas() {
 //new population.
 //pretty self explanatory.
 var pop = [];
-function newPop(hnCount, hlCount, popCount) {
-  pop = [];
-  //clearCanvas();
 
-  for(var i=0; i<popCount; i++){
-	pop[i]=buildNet(hnCount, hlCount, i, rand()*canvas.width, rand()*canvas.height);
-	//ctx.fillStyle="rgb("+2.55*pop[i].diet + ",0," + 255/pop[i].diet + ")";
-	//ctx.fillText(i,pop[i].xPos,pop[i].yPos);
-  }
+//eventually i will add arguments to this function (hnCount, hlCount, popCount), etc.
+function newPop(popCount) {
+    pop = [];
+    //clearCanvas();
+
+    for (var i = 0; i < popCount; i++) {
+        pop[i] = makeOrg(4, 3, decideGender(), rand(), i, rand() * worldW, rand() * worldH, rand() * 2 * Math.PI, rand() * Math.PI / 2, rand() * Math.PI / 2, rand() * Math.PI, 50, 10, 10);
+        //ctx.fillStyle="rgb("+2.55*pop[i].diet + ",0," + 255/pop[i].diet + ")";
+        //ctx.fillText(i,pop[i].xPos,pop[i].yPos);
+    }
 
 }
 
@@ -95,38 +97,6 @@ function stop() {
 }
 //each step of the simulation is contained in an iteration.
 //PROBLEM I NEED TO FIX: Make it so that they only move after every network has analyzed the current setup.
-function iterate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for(var i=0;i<pop.length;i++) {
-	var net = pop[i];
-	rotEyes(net);
-	addProxes(net);
-
-	readNet(net);
-
-	ctx.fillStyle="rgb("+ Math.floor(2.55*net.diet) + "," + Math.floor(255/net.diet) + ",0,)";
-
-  }
-  for(i = 0; i < pop.length; i++) {
-
-	  if (canvas.width < pop[i].xPos || 0 > pop[i].xPos || canvas.height < pop[i].yPos || 0 > pop[i].yPos) {
-		  pop[i] = makeNet(i, rand() * canvas.width, rand() * canvas.height);
-	  }
-
-	  moveNet(pop[i]);
-	  rotEyes(pop[i]);
-	  addProxes(pop[i]);
-
-	  ctx.fillText(i, pop[i].xPos, pop[i].yPos);
-	  ctx.fillText("U", pop[i].eyeUpX, pop[i].eyeUpY);
-	  ctx.fillText("D", pop[i].eyeDownX, pop[i].eyeDownY);
-	  ctx.fillText("L", pop[i].eyeLeftX, pop[i].eyeLeftY);
-	  ctx.fillText("R", pop[i].eyeRightX, pop[i].eyeRightY);
-
-
-  }
-
-}
 
 //takes the "speed value" from the network and turns it into a distance traveled within my parameters.
 function moveNet(net) {
@@ -200,7 +170,7 @@ function buildNet(hnCount, hlCount) {
 		//so, accessing the lowest synapse of the inputs is: "nn.inputs.a.layer0.node0.synapse"
 
 		for (var layer in nn.inputs[input]) {
-			i0f (!nn.inputs[input].hasOwnProperty(layer)) {
+			if (!nn.inputs[input].hasOwnProperty(layer)) {
 				continue;
 			}
 
@@ -335,6 +305,8 @@ function readNet(nn) {
       //probably in the wrong place too  nn.outputs[output].value /= nn.hLayers.totalNumberOfNodes;
     }
 }
+
+
 function decideGender() {
     if (rand() < 0.5) {
         return 'male';
@@ -350,18 +322,24 @@ function getColor(value){
 }
 
 
-//makeOrg(4, 3, decideGender(), rand(), i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, rand()*Math.PI, rand()*Math.PI, 10, 10) eyePos and breadth should be only positive.
-function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, eyeBreadth, health, hunger) {
+//makeOrg(4, 3, decideGender(), rand(), i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, rand()*Math.PI/2, rand()*Math.PI/2, rand()*Math.PI, 50, 10, 10) eyePos and breadth should be only positive, position is 0-90 degrees, breadth is 0-180. eye rotation is the rotation of the eye in its position, 0-90 degrees.
+function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, eyeRot, eyeBreadth, eyeRange, health, hunger) {
     var org = {};
     org.x = x;
     org.y = y;
     org.rot = rot;
-
+    org.nn = buildNet(hnCount, hlCount);
+    readNet(org);
     //morphology
     org.morph = {};
     org.morph.color = color;
     org.morph.gender = gender;
-    org.morph.eye.angle = eyePos;
+    
+    //pos is an angle.
+    org.morph.eye = {};
+    org.morph.eyePos = eyePos;
+    
+    org.morph.eyeRot = eyeRot;
     
     org.radius = 10;
     //todo: _____!!!! think abot body shape, should it differ with age/health?
@@ -372,33 +350,107 @@ function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, ey
     
     //in relation to center of head
     org.morph.eye.breadth = eyeBreadth;
-    getEyes();
+    org.morph.eye.pos = {};
+    org.morph.eye.range = eyeRange;
+    getEyes(org);
     //in relation to eye.
     
-    org.nn = buildNet(hnCount, hlCount);
 
     return org;
 }
 
 function getEyes(org){ //working on this right now.
-    org.morph.eye.pos = {};
+ 
     //center coords are org.x and org.y
-    
-    
-
     org.morph.eye.pos.r = {
-        x: org.x + Math.cos(org.rot - org.eye.pos)*org.radius,
-        y: org.y + Math.sin(org.rot - org.eye.pos)*org.radius,
+        x: org.x + Math.cos(org.rot - org.morph.eyePos)*org.radius,
+        y: org.y - Math.sin(org.rot - org.morph.eyePos)*org.radius,
     }
     org.morph.eye.pos.l = {
-        x: org.x + Math.cos(org.rot + org.eye.pos)*org.radius,
-        y: org.y + Math.cos(org.rot + org.eye.pos)*org.radius,
+        x: org.x + Math.cos(org.rot + org.morph.eyePos)*org.radius,
+        y: org.y - Math.sin(org.rot + org.morph.eyePos)*org.radius,
     }
-    for(i=0, i < 4; i++) {
+    //get sight line end points
+    for(var i=0; i < 4; i++) {
         //r = right eye, l is left...
-        org.morph.eye.pos["r" + i]
-        org.morph.eye.pos["l" + i]
+        //these should be point, so that a line can be drawn from the eye to the point as a sight-line.
+        var offset = org.morph.eye.breadth - (i*org.morph.eye.breadth/4)
+        org.morph.eye.pos.r[i] = {
+            x: org.morph.eye.pos.r.x + Math.cos(org.rot - org.morph.eyeRot - offset) * org.morph.eye.range,
+            y: org.morph.eye.pos.r.y - Math.sin(org.rot - org.morph.eyeRot - offset) * org.morph.eye.range,
+        }//warning, the current eye length is set to 20 right here.
+        org.morph.eye.pos.l[i] = {
+        
+            x: org.morph.eye.pos.l.x + Math.cos(org.rot + org.morph.eyeRot + offset) * org.morph.eye.range,
+            y: org.morph.eye.pos.l.y - Math.sin(org.rot + org.morph.eyeRot + offset) * org.morph.eye.range,
+            
+        }
     }
+}
+//render should not cause any change, just render the scenario. use iterate for
+function render() {
+    clearCanvas();
+    for(var i = 0; i < pop.length; i++) {
+        var org = pop[i];
+        circle(org.x, org.y, org.radius);
+        ctx.fillText(i, org.x, org.y);
+        for(var j = 0; j < 4; j++){
+
+            //console.log(org.morph.eye.pos.r.x);
+          //  console.log(org.morph.eye.pos.r.x);
+            line(org.morph.eye.pos.r.x, org.morph.eye.pos.r.y, org.morph.eye.pos.r[j].x, org.morph.eye.pos.r[j].y);
+            
+            line(org.morph.eye.pos.l.x, org.morph.eye.pos.l.y, org.morph.eye.pos.l[j].x, org.morph.eye.pos.l[j].y);
+        }
+   }
+}
+function line(startX, startY, endX, endY) {
+    
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+}
+
+function circle(centerX, centerY, radius) {
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+//    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#003300';
+    ctx.stroke();
+}
+
+function iterate() {
+  
+  for(var i=0;i<pop.length;i++) {
+	var net = pop[i];
+	rotEyes(net);
+	addProxes(net);
+
+	readNet(net);
+
+	ctx.fillStyle="rgb("+ Math.floor(2.55*net.diet) + "," + Math.floor(255/net.diet) + ",0,)";
+
+  }
+  for( i = 0; i < pop.length; i++) {
+
+	  if (canvas.width < pop[i].xPos || 0 > pop[i].xPos || canvas.height < pop[i].yPos || 0 > pop[i].yPos) {
+		  pop[i] = makeNet(i, rand() * canvas.width, rand() * canvas.height);
+	  }
+
+	  moveNet(pop[i]);
+	  rotEyes(pop[i]);
+	  addProxes(pop[i]);
+
+	  ctx.fillText(i, pop[i].xPos, pop[i].yPos);
+	  ctx.fillText("U", pop[i].eyeUpX, pop[i].eyeUpY);
+	  ctx.fillText("D", pop[i].eyeDownX, pop[i].eyeDownY);
+	  ctx.fillText("L", pop[i].eyeLeftX, pop[i].eyeLeftY);
+	  ctx.fillText("R", pop[i].eyeRightX, pop[i].eyeRightY);
+
+
+  }
+
 }
 //finds the placement of each of the eyes from the rot of the creature. in radians.
 function rotEyes(net) {
@@ -429,7 +481,7 @@ function addProxes(net) {
 
 function getProx(net,sPosX, sPosY) {
   var closest=Infinity;
-  for(i=0;i<pop.length;i++){
+  for(var i=0;i<pop.length;i++){
 	var distance = findDis(sPosX,sPosY, pop[i].xPos, pop[i].yPos);
 	if (i != net && distance <= closest) {
 	closest = findDis(sPosX,sPosY, pop[i].xPos,pop[i].yPos);
