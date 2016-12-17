@@ -342,6 +342,9 @@ function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, ey
     org.morph.eyeRot = eyeRot;
     
     org.radius = 10;
+    org.morph.eyeRes = 5;
+    
+    //eye resolution, how manny sightlines
     //todo: _____!!!! think about body shape, should it differ with age/health?
     //current values not associated directly with other stuff like nn or morph.
     org.health = health;
@@ -371,18 +374,18 @@ function getEyes(org){ //working on this right now.
         y: org.y - Math.sin(org.rot + org.morph.eyePos)*org.radius,
     }
     //get sight line end points
-    for(var i=0; i < 4; i++) {
+    for(var i=0; i < org.morph.eyeRes; i++) {
         //r = right eye, l is left...
         //these should be point, so that a line can be drawn from the eye to the point as a sight-line.
-        var offset = org.morph.eye.breadth - (i*org.morph.eye.breadth/4)
+        var offset = org.morph.eye.breadth/2 - i*org.morph.eye.breadth/org.morph.eyeRes
         org.morph.eye.pos.r[i] = {
-            x: org.morph.eye.pos.r.x + Math.cos(org.rot - org.morph.eyeRot - offset) * org.morph.eye.range,
-            y: org.morph.eye.pos.r.y - Math.sin(org.rot - org.morph.eyeRot - offset) * org.morph.eye.range,
+            x: org.morph.eye.pos.r.x + Math.cos(org.rot - offset) * org.morph.eye.range,
+            y: org.morph.eye.pos.r.y - Math.sin(org.rot - offset) * org.morph.eye.range,
         }
         org.morph.eye.pos.l[i] = {
         
-            x: org.morph.eye.pos.l.x + Math.cos(org.rot + org.morph.eyeRot + offset) * org.morph.eye.range,
-            y: org.morph.eye.pos.l.y - Math.sin(org.rot + org.morph.eyeRot + offset) * org.morph.eye.range,
+            x: org.morph.eye.pos.l.x + Math.cos(org.rot + offset) * org.morph.eye.range,
+            y: org.morph.eye.pos.l.y - Math.sin(org.rot + offset) * org.morph.eye.range,
             
         }
     }
@@ -395,7 +398,7 @@ function render() {
         
         circle(org.x, org.y, org.radius, org.morph.color);
         ctx.fillText(i, org.x - org.radius/2, org.y + org.radius/2);
-        for(var j = 0; j < 4; j++){
+        for(var j = 0; j < org.morph.eyeRes; j++){
 
             //console.log(org.morph.eye.pos.r.x);
           //  console.log(org.morph.eye.pos.r.x);
