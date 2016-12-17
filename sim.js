@@ -8,7 +8,7 @@ function geid(id) {
 }
 //WILL later change to a PRNG //done
 var seed = 1;
-var xorRandom = xor4096(1);
+var xorRandom = xor4096(seed);
 //xorshift is alower by a bit than Math.random()
 function rand() {
 //  return Math.random();
@@ -317,7 +317,7 @@ function decideGender() {
 
 function getColor(value){
     //value from 0 to 1
-    var hue=((1-value)*360).toString(10);
+    var hue = ((1-value)*360).toString(10);
     return ["hsl(",hue,",100%,50%)"].join("");
 }
 
@@ -332,7 +332,7 @@ function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, ey
     readNet(org);
     //morphology
     org.morph = {};
-    org.morph.color = color;
+    org.morph.color = getColor(color);
     org.morph.gender = gender;
     
     //pos is an angle.
@@ -342,7 +342,7 @@ function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, ey
     org.morph.eyeRot = eyeRot;
     
     org.radius = 10;
-    //todo: _____!!!! think abot body shape, should it differ with age/health?
+    //todo: _____!!!! think about body shape, should it differ with age/health?
     //current values not associated directly with other stuff like nn or morph.
     org.health = health;
     org.hunger
@@ -378,7 +378,7 @@ function getEyes(org){ //working on this right now.
         org.morph.eye.pos.r[i] = {
             x: org.morph.eye.pos.r.x + Math.cos(org.rot - org.morph.eyeRot - offset) * org.morph.eye.range,
             y: org.morph.eye.pos.r.y - Math.sin(org.rot - org.morph.eyeRot - offset) * org.morph.eye.range,
-        }//warning, the current eye length is set to 20 right here.
+        }
         org.morph.eye.pos.l[i] = {
         
             x: org.morph.eye.pos.l.x + Math.cos(org.rot + org.morph.eyeRot + offset) * org.morph.eye.range,
@@ -392,12 +392,14 @@ function render() {
     clearCanvas();
     for(var i = 0; i < pop.length; i++) {
         var org = pop[i];
-        circle(org.x, org.y, org.radius);
+        
+        circle(org.x, org.y, org.radius, org.morph.color);
         ctx.fillText(i, org.x - org.radius/2, org.y + org.radius/2);
         for(var j = 0; j < 4; j++){
 
             //console.log(org.morph.eye.pos.r.x);
           //  console.log(org.morph.eye.pos.r.x);
+            
             line(org.morph.eye.pos.r.x, org.morph.eye.pos.r.y, org.morph.eye.pos.r[j].x, org.morph.eye.pos.r[j].y);
             
             line(org.morph.eye.pos.l.x, org.morph.eye.pos.l.y, org.morph.eye.pos.l[j].x, org.morph.eye.pos.l[j].y);
@@ -412,44 +414,45 @@ function line(startX, startY, endX, endY) {
     ctx.stroke();
 }
 
-function circle(centerX, centerY, radius) {
+function circle(centerX, centerY, radius, color) {
     ctx.beginPath();
+    
     ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+    ctx.strokeStyle = color;
 //    ctx.lineWidth = 5;
-    ctx.strokeStyle = '#003300';
     ctx.stroke();
 }
 
 function iterate() {
-  
-  for(var i=0;i<pop.length;i++) {
-	var net = pop[i];
-	rotEyes(net);
-	addProxes(net);
 
-	readNet(net);
+    for (var i = 0; i < pop.length; i++) {
+        var net = pop[i];
+        rotEyes(net);
+        addProxes(net);
 
-	ctx.fillStyle="rgb("+ Math.floor(2.55*net.diet) + "," + Math.floor(255/net.diet) + ",0,)";
+        readNet(net);
 
-  }
-  for( i = 0; i < pop.length; i++) {
+        ctx.fillStyle = "rgb(" + Math.floor(2.55 * net.diet) + "," + Math.floor(255 / net.diet) + ",0,)";
 
-	  if (canvas.width < pop[i].xPos || 0 > pop[i].xPos || canvas.height < pop[i].yPos || 0 > pop[i].yPos) {
-		  pop[i] = makeNet(i, rand() * canvas.width, rand() * canvas.height);
-	  }
+    }
+    for (i = 0; i < pop.length; i++) {
 
-	  moveNet(pop[i]);
-	  rotEyes(pop[i]);
-	  addProxes(pop[i]);
+        if (canvas.width < pop[i].xPos || 0 > pop[i].xPos || canvas.height < pop[i].yPos || 0 > pop[i].yPos) {
+            pop[i] = makeNet(i, rand() * canvas.width, rand() * canvas.height);
+        }
 
-	  ctx.fillText(i, pop[i].xPos, pop[i].yPos);
-	  ctx.fillText("U", pop[i].eyeUpX, pop[i].eyeUpY);
-	  ctx.fillText("D", pop[i].eyeDownX, pop[i].eyeDownY);
-	  ctx.fillText("L", pop[i].eyeLeftX, pop[i].eyeLeftY);
-	  ctx.fillText("R", pop[i].eyeRightX, pop[i].eyeRightY);
+        moveNet(pop[i]);
+        rotEyes(pop[i]);
+        addProxes(pop[i]);
+
+        ctx.fillText(i, pop[i].xPos, pop[i].yPos);
+        ctx.fillText("U", pop[i].eyeUpX, pop[i].eyeUpY);
+        ctx.fillText("D", pop[i].eyeDownX, pop[i].eyeDownY);
+        ctx.fillText("L", pop[i].eyeLeftX, pop[i].eyeLeftY);
+        ctx.fillText("R", pop[i].eyeRightX, pop[i].eyeRightY);
 
 
-  }
+    }
 
 }
 //finds the placement of each of the eyes from the rot of the creature. in radians.
