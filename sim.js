@@ -233,6 +233,8 @@ function buildNet(hnCount, hlCount) {
 	
 	return nn;
 }
+
+
 //a network thinking.
 function readNet(nn) {
 	for(var layer in nn.hLayers) {
@@ -244,6 +246,7 @@ function readNet(nn) {
 				continue;
 			}
 			nn.hLayers[layer][node].value = 0;
+			
 			for (var input in nn.inputs){
 			    if (!nn.inputs.hasOwnProperty(input)) {
 			        continue;
@@ -278,14 +281,11 @@ function readNet(nn) {
             }
             
 
-            for (var outs in nn.inputs[inputOut]) {
-                if (!nn.inputs[inputOut].hasOwnProperty(outs) || typeof(nn.inputs[inputOut][outs].synapse) !== "number") {
-                    continue;
-                }
+
             
-                nn.outputs[output].value += (nn.inputs[inputOut][outs].synapse * nn.inputs[inputOut].value)/nn.hLayers.totalNumberOfNodes;
+                nn.outputs[output].value += (nn.inputs[inputOut][output].synapse * nn.inputs[inputOut].value)/nn.hLayers.totalNumberOfNodes;
             
-            }
+            
         }
         
         for (var layerOut in nn.hLayers) {
@@ -332,6 +332,7 @@ function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, ey
     readNet(org);
     //morphology
     org.morph = {};
+    org.morph.colorGene = color;
     org.morph.color = getColor(color);
     org.morph.gender = gender;
     
@@ -348,8 +349,8 @@ function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, ey
     //todo: _____!!!! think about body shape, should it differ with age/health?
     //current values not associated directly with other stuff like nn or morph.
     org.health = health;
-    org.hunger
-    //high hunger values good, there will be a max.
+    org.hunger = hunger;
+    //high hunger values good, there will be a max.possibly overeating.
     
     //in relation to center of head
     org.morph.eye.breadth = eyeBreadth;
