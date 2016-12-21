@@ -391,25 +391,94 @@ function getEyes(org){ //working on this right now.
         }
     }
 }
-//render should not cause any change, just render the scenario. use iterate for
+
+function iterate(iteratonsBeforeRender){
+    for(var i = 0; i < iteratonsBeforeRender; i++) {
+        for(var j = 0; j < pop.length; j++) {
+        
+            var org = pop[j];
+            if (org != null) {
+                //if it is outside the world.
+                if (worldW < org.x < 0 || worldH < org.y < 0) {
+                    //destroy instead of kill because it has left the environment.
+                    destroy(org);
+        
+        
+                } else {
+                    getInputs(org);
+        
+        
+                }
+        
+            }
+        }
+         
+        
+        for(var j = 0; j < pop.length; j++) {
+            readNet(org);
+            walk(org);
+            
+        }
+        
+    }
+    render();
+}
+
+
+//Tom Stephens (http://math.stackexchange.com/users/121/tom-stephens), How to tell if a line segment intersects with a circle?, URL (version: 2010-08-20): http://math.stackexchange.com/q/2862
+//cx is h, cy is k
+function lineCircle(x1, y1, x2, y2, cx, cy, r) {
+    var a = Math.pow(x1, 2) - 2*x1*x2 + Math.pow(x2, 2);
+    var b = 2*x1*x2 //-might be a "+" 2*Math.pow(x2, 2) - 2*cx*x2;
+    var c = Math.pow(x2, 2) - 2*cx*x2 - Math.pow(r, 2);
+
+    
+}
+
+function getInputs(org) {
+    //for ()
+    
+}
+
+
+//gives an organism 1 step of walk
+function walk() {
+    
+}
+
+function destroy(target) {
+    target = null;
+}
+
+function kill(org) {
+    //should add a nutrient drop here
+        
+    org = null;
+}
+
+
+//render should not cause any change, just render the scenario. use iterate for iteration...
 function render() {
     clearCanvas();
-    for(var i = 0; i < pop.length; i++) {
-        var org = pop[i];
-        
-        circle(org.x, org.y, org.radius, org.morph.color);
-        ctx.fillText(i, org.x - org.radius/2, org.y + org.radius/2);
-        for(var j = 0; j < org.morph.eyeRes; j++){
+    for (var i = 0; i < pop.length; i++) {
+     //   if (org != null) {
+            var org = pop[i];
 
-            //console.log(org.morph.eye.pos.r.x);
-          //  console.log(org.morph.eye.pos.r.x);
-            
-            line(org.morph.eye.pos.r.x, org.morph.eye.pos.r.y, org.morph.eye.pos.r[j].x, org.morph.eye.pos.r[j].y);
-            
-            line(org.morph.eye.pos.l.x, org.morph.eye.pos.l.y, org.morph.eye.pos.l[j].x, org.morph.eye.pos.l[j].y);
+            circle(org.x, org.y, org.radius, org.morph.color);
+            ctx.fillText(i, org.x - org.radius / 2, org.y + org.radius / 2);
+            for (var j = 0; j < org.morph.eyeRes; j++) {
+
+                //console.log(org.morph.eye.pos.r.x);
+                //  console.log(org.morph.eye.pos.r.x);
+
+                line(org.morph.eye.pos.r.x, org.morph.eye.pos.r.y, org.morph.eye.pos.r[j].x, org.morph.eye.pos.r[j].y);
+
+                line(org.morph.eye.pos.l.x, org.morph.eye.pos.l.y, org.morph.eye.pos.l[j].x, org.morph.eye.pos.l[j].y);
+            //}
         }
-   }
+    }
 }
+
 function line(startX, startY, endX, endY) {
     
     ctx.beginPath();
@@ -427,38 +496,7 @@ function circle(centerX, centerY, radius, color) {
     ctx.stroke();
 }
 
-function iterate() {
 
-    for (var i = 0; i < pop.length; i++) {
-        var net = pop[i];
-        rotEyes(net);
-        addProxes(net);
-
-        readNet(net);
-
-        ctx.fillStyle = "rgb(" + Math.floor(2.55 * net.diet) + "," + Math.floor(255 / net.diet) + ",0,)";
-
-    }
-    for (i = 0; i < pop.length; i++) {
-
-        if (canvas.width < pop[i].xPos || 0 > pop[i].xPos || canvas.height < pop[i].yPos || 0 > pop[i].yPos) {
-            pop[i] = makeNet(i, rand() * canvas.width, rand() * canvas.height);
-        }
-
-        moveNet(pop[i]);
-        rotEyes(pop[i]);
-        addProxes(pop[i]);
-
-        ctx.fillText(i, pop[i].xPos, pop[i].yPos);
-        ctx.fillText("U", pop[i].eyeUpX, pop[i].eyeUpY);
-        ctx.fillText("D", pop[i].eyeDownX, pop[i].eyeDownY);
-        ctx.fillText("L", pop[i].eyeLeftX, pop[i].eyeLeftY);
-        ctx.fillText("R", pop[i].eyeRightX, pop[i].eyeRightY);
-
-
-    }
-
-}
 //finds the placement of each of the eyes from the rot of the creature. in radians.
 function rotEyes(net) {
 
