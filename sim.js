@@ -363,7 +363,7 @@ function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, ey
     return org;
 }
 
-function getEyes(org){ //working on this right now.
+function getEyes(org){
  
     //center coords are org.x and org.y
     org.morph.eye.pos.r = {
