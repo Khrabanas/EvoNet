@@ -1,8 +1,5 @@
 
-function cursorPos() {
-    cursorX = e.pageX;
-    cursorY = e.pageY;
-}
+
 
 var selected = {org: [], plants: [],};
 function clickData() {
@@ -20,8 +17,9 @@ function findDis(x1,y1,x2,y2) {
 
 
 document.onclick = function(e){
-    
-    cursorPos();
+    cursorX = e.pageX;
+    cursorY = e.pageY;
+
     clickData();
     
     render();
