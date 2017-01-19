@@ -325,6 +325,7 @@ function getColor(value){
 //makeOrg(4, 3, decideGender(), rand(), i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, rand()*Math.PI/2, rand()*Math.PI/2, rand()*Math.PI, 50, 10, 10) eyePos and breadth should be only positive, position is 0-90 degrees, breadth is 0-180. eye rotation is the rotation of the eye in its position, 0-90 degrees.
 function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, eyeRot, eyeBreadth, eyeRange, health, hunger) {
     var org = {};
+    org.index = netHome;
     org.x = x;
     org.y = y;
     org.rot = rot;
