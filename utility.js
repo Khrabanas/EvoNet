@@ -10,6 +10,13 @@ function clickData() {
         }
     }
 }
+
+function getMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+    cursorX = evt.clientX - rect.left
+    cursorY = evt.clientY - rect.top
+}
+
 function findDis(x1,y1,x2,y2) {
   return (x1-x2)*(x1-x2)+(y1-y2)*(y1-y2);
   //requires a Math.sqrt to get actual value. this can be found in the getProx function.
@@ -17,8 +24,7 @@ function findDis(x1,y1,x2,y2) {
 
 
 document.onclick = function(e){
-    cursorX = e.pageX;
-    cursorY = e.pageY;
+    var pos = getMousePos(canvas, e);
 
     clickData();
     
