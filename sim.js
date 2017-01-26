@@ -106,11 +106,13 @@ function moveNet(net) {
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
 var inputStore = {
     //eLL1 = eyeLineLeftnumber1, eLRight2 etc.
+    eLR0:{value:pnrand()}
 	eLR1:{value:pnrand()},
 	eLR2:{value:pnrand()},
 	eLR3:{value:pnrand()},
 	eLR4:{value:pnrand()},
 
+    eLR0:{value:pnrand()}
 	eLL1:{value:pnrand()},
 	eLL2:{value:pnrand()},
 	eLL3:{value:pnrand()},
@@ -364,6 +366,65 @@ function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, ey
     return org;
 }
 
+function checkEye(org, eye) {
+    //for right eye
+    for (var k = 0; k < pop.length; k++) {
+        var rightEyeDis = Math.sqrt(findDis(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y, pop[k].x, pop[k].y));
+        if (rightEyeDis > pop[k].r + org.morph.eye.range) {
+            for (var j = 0; j < org.morph.eyeRes; j++) {
+                nn.inputs["eLR" + j].value = 1;
+
+                break;
+            }
+        }
+        else if (rightEyeDis < pop[k].r) {
+            for (var j = 0; j < org.morph.eyeRes; j++) {
+                nn.inputs["eLR" + j].value = 1;
+
+                break;
+            }
+        }
+        else {
+            for (var j = 0; j < org.morph.eyeRes; j++) {
+                nn.inputs["eLR" + j].value = lineCircle(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y, org.morph.eye.pos[eye][j].x, org.morph.eye.pos[eye][j].y, pop[k].x, pop[k].y, pop[k].radius);
+            }
+        }
+    }
+}
+
+lineCircle(pop[90].morph.eye.pos.r.x, pop[90].morph.eye.pos.r.y, pop[90].morph.eye.pos.r[2].x, pop[90].morph.eye.pos.r[2].y, pop[99].x, pop[99].y, pop[99].radius);
+
+function lineCircle(xe, ye, xt, yt, xc, yc, r) {
+    circle(xe, ye, 3, "red", 3)
+    circle(xt, yt, 3, "green", 3)
+    circle(xc, yc, r, "blue", 3)
+    
+     gvalue = Math.abs((xt-xe)*xc + (ye-yt)*yc + (xe-xt)*ye + xe*(yt-ye))/Math.sqrt((xt-xe)*(xt-xe) + (ye-yt)*(ye-yt))
+    if(gvalue <= r) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+/*Math.abs((xt-xe)*xc + (ye-yt)*yc + (xe-xt)*ye + xe*(yt-ye))/Math.sqrt((xt-xe)*(xt-xe) + (ye-yt)*(ye-yt)) from
+ changed y's to negative, might work.
+
+@MISC {275533,
+    TITLE = {Check if line intersects with circles perimeter},
+    AUTHOR = {Santosh Linkha (http://math.stackexchange.com/users/2199/santosh-linkha)},
+    HOWPUBLISHED = {Mathematics Stack Exchange},
+    NOTE = {URL:http://math.stackexchange.com/q/275533 (version: 2013-01-11)},
+    EPRINT = {http://math.stackexchange.com/q/275533},
+    URL = {http://math.stackexchange.com/q/275533}
+}
+*/
+
+
+
+
+
+
 function getEyes(org){ //working on this right now.
  
     //center coords are org.x and org.y
@@ -419,90 +480,23 @@ function line(startX, startY, endX, endY) {
     ctx.stroke();
 }
 
-function circle(centerX, centerY, radius, color) {
+function circle(centerX, centerY, radius, color, width) {
     ctx.beginPath();
     
     ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
     ctx.strokeStyle = color;
-//    ctx.lineWidth = 5;
+    if (width != undefined) {
+        ctx.lineWidth = width;
+    } else {
+        ctx.lineWidth = 1;
+    }
     ctx.stroke();
 }
 
 function iterate() {
 
-    for (var i = 0; i < pop.length; i++) {
-        var net = pop[i];
-        rotEyes(net);
-        addProxes(net);
-
-        readNet(net);
-
-        ctx.fillStyle = "rgb(" + Math.floor(2.55 * net.diet) + "," + Math.floor(255 / net.diet) + ",0,)";
-
-    }
-    for (i = 0; i < pop.length; i++) {
-
-        if (canvas.width < pop[i].xPos || 0 > pop[i].xPos || canvas.height < pop[i].yPos || 0 > pop[i].yPos) {
-            pop[i] = makeNet(i, rand() * canvas.width, rand() * canvas.height);
-        }
-
-        moveNet(pop[i]);
-        rotEyes(pop[i]);
-        addProxes(pop[i]);
-
-        ctx.fillText(i, pop[i].xPos, pop[i].yPos);
-        ctx.fillText("U", pop[i].eyeUpX, pop[i].eyeUpY);
-        ctx.fillText("D", pop[i].eyeDownX, pop[i].eyeDownY);
-        ctx.fillText("L", pop[i].eyeLeftX, pop[i].eyeLeftY);
-        ctx.fillText("R", pop[i].eyeRightX, pop[i].eyeRightY);
-
-
-    }
-
-}
-//finds the placement of each of the eyes from the rot of the creature. in radians.
-function rotEyes(net) {
-
-//center x= cX
-  var cX = net.xPos;
-  var cY = net.yPos;
-  //0
-  net.eyeUpX = cX + 30*Math.cos(net.rot);
-  net.eyeUpY = cY + 30*Math.sin(net.rot);
-  // PI
-  net.eyeDownX = cX - 30*Math.cos(net.rot);
-  net.eyeDownY = cY - 30*Math.sin(net.rot);
-  // PI/2
-  net.eyeLeftX = cX - 30*Math.cos(net.rot + Math.PI/2);
-  net.eyeLeftY = cY - 30*Math.sin(net.rot + Math.PI/2);
-  // 3PI/2
-  net.eyeRightX = cX - 30*Math.cos(net.rot + 3*Math.PI/2);
-  net.eyeRightY = cY - 30*Math.sin(net.rot + 3*Math.PI/2);
 }
 
-function addProxes(net) {
-  net.upIn = getProx(net, net.eyeUpX, net.eyeUpX);
-  net.downIn = getProx(net, net.eyeDownX, net.eyeDownX);
-  net.leftIn = getProx(net, net.eyeLeftX, net.eyeLeftX);
-  net.rightIn = getProx(net, net.eyeRightX, net.eyeRightX);
-}
-
-function getProx(net,sPosX, sPosY) {
-  var closest=Infinity;
-  for(var i=0;i<pop.length;i++){
-	var distance = findDis(sPosX,sPosY, pop[i].xPos, pop[i].yPos);
-	if (i != net && distance <= closest) {
-	closest = findDis(sPosX,sPosY, pop[i].xPos,pop[i].yPos);
-	}
-  }
-
-  if(Math.sqrt(closest) < 200){
-	return Math.sqrt(closest);
-  } else {
-  return 0;
-}
-
-}
 
 
 function findDis(x1,y1,x2,y2) {

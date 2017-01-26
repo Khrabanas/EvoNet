@@ -5,6 +5,10 @@
   </head>
   <body>
     <canvas id="canvas">If you see this, it means you browser is incompatible with the canvas, or a glitch has occured. I recommend installing Chrome.</canvas>
+    <button id="render-button"type="button" onclick="render()">render</button>
+    <button id="newPop-button"type="button" onclick="newPop(geid('popNum').value);">new population</button>
+    <input type="text" id="popNum" value="100" />
+    <button id="run-button"type="button" onclick="run('need to add a speed number here')">render</button>
 		<script type="text/javascript" src="xor4096.js"></script>
 		<script type="text/javascript" src="sim.js"></script>
 	  	<script type="text/javascript" src="utility.js"></script>
