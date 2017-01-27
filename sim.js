@@ -42,7 +42,7 @@ function newPop(popCount) {
     //clearCanvas();
 
     for (var i = 0; i < popCount; i++) {
-        pop[i] = makeOrg(4, 3, decideGender(), rand(), i, rand() * worldW, rand() * worldH, rand() * 2 * Math.PI, rand() * Math.PI / 2, rand() * Math.PI / 2, rand() * Math.PI, 50, 10, 10);
+        pop[i] = makeOrg(4, 3, decideGender(), rand(), i, rand() * worldW, rand() * worldH, rand() * 2 * Math.PI, rand() * Math.PI / 2, rand() * Math.PI / 2, rand() * Math.PI, 100, 10, 10);
         //ctx.fillStyle="rgb("+2.55*pop[i].diet + ",0," + 255/pop[i].diet + ")";
         //ctx.fillText(i,pop[i].xPos,pop[i].yPos);
     }
@@ -106,13 +106,13 @@ function moveNet(net) {
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
 var inputStore = {
     //eLL1 = eyeLineLeftnumber1, eLRight2 etc.
-    	eLR0:{value:pnrand()},
+    eLR0:{value:pnrand()},
 	eLR1:{value:pnrand()},
 	eLR2:{value:pnrand()},
 	eLR3:{value:pnrand()},
 	eLR4:{value:pnrand()},
 
-    	eLR0:{value:pnrand()},
+    eLL0:{value:pnrand()},
 	eLL1:{value:pnrand()},
 	eLL2:{value:pnrand()},
 	eLL3:{value:pnrand()},
@@ -367,26 +367,38 @@ function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, ey
 }
 
 function checkEye(org, eye) {
+    if(eye == "r") {
+        var eyeInput = "eLR";
+    }else if(eye == "l") {
+        var eyeInput = "eLL"
+    } else {
+        throw "Invalid eye asked for; use l (left) or r (right) for the checkEye function.";
+        return;
+    }
+    
     //for right eye
     for (var k = 0; k < pop.length; k++) {
-        var rightEyeDis = Math.sqrt(findDis(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y, pop[k].x, pop[k].y));
-        if (rightEyeDis > pop[k].r + org.morph.eye.range) {
+        if(k == org.index) {
+            continue;
+        }
+        var eyeDis = Math.sqrt(findDis(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y, pop[k].x, pop[k].y));
+        if (eyeDis > pop[k].r + org.morph.eye.range) {
             for (var j = 0; j < org.morph.eyeRes; j++) {
-                nn.inputs["eLR" + j].value = 1;
+                org.nn.inputs[eyeInput + j].value = 0;
 
                 break;
             }
         }
-        else if (rightEyeDis < pop[k].r) {
+        else if (eyeDis < pop[k].r) {
             for (var j = 0; j < org.morph.eyeRes; j++) {
-                nn.inputs["eLR" + j].value = 1;
+                org.nn.inputs[eyeInput + j].value = 1;
 
                 break;
             }
         }
         else {
             for (var j = 0; j < org.morph.eyeRes; j++) {
-                nn.inputs["eLR" + j].value = lineCircle(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y, org.morph.eye.pos[eye][j].x, org.morph.eye.pos[eye][j].y, pop[k].x, pop[k].y, pop[k].radius);
+                org.nn.inputs[eyeInput + j].value = lineCircle(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y, org.morph.eye.pos[eye][j].x, org.morph.eye.pos[eye][j].y, pop[k].x, pop[k].y, pop[k].radius);
             }
         }
     }
@@ -395,10 +407,10 @@ function checkEye(org, eye) {
 //lineCircle(pop[90].morph.eye.pos.r.x, pop[90].morph.eye.pos.r.y, pop[90].morph.eye.pos.r[2].x, pop[90].morph.eye.pos.r[2].y, pop[99].x, pop[99].y, pop[99].radius);
 
 function lineCircle(xe, ye, xt, yt, xc, yc, r) {
-    circle(xe, ye, 3, "red", 3)
+   /* circle(xe, ye, 3, "red", 3)
     circle(xt, yt, 3, "green", 3)
     circle(xc, yc, r, "blue", 3)
-    
+    */
      gvalue = Math.abs((xt-xe)*xc + (ye-yt)*yc + (xe-xt)*ye + xe*(yt-ye))/Math.sqrt((xt-xe)*(xt-xe) + (ye-yt)*(ye-yt))
     if(gvalue <= r) {
         return 1;
@@ -494,7 +506,28 @@ function circle(centerX, centerY, radius, color, width) {
 }
 
 function iterate() {
-
+    for(var j = 0; j < 5; j++) {
+        for (var i = 0; i < pop.length; i++) {
+            checkEye(pop[i], "r");
+            checkEye(pop[i], "l");
+            readNet(pop[i].nn);
+            //console.log(pop[i].nn.outputs.rot.value);
+        }
+        for (var i = 0; i < pop.length; i++) {
+            pop[i].rot += pop[i].nn.outputs.rot.value;
+            pop[i].x += Math.cos(pop[i].rot) * pop[i].nn.outputs.speed.value;
+            pop[i].y -= Math.sin(pop[i].rot) * pop[i].nn.outputs.speed.value;
+    
+    
+        }
+        for (var i = 0; i < pop.length; i++) {
+    
+            getEyes(pop[i])
+    
+        }
+    }
+        render();
+        
 }
 
 
