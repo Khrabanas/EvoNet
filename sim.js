@@ -106,13 +106,13 @@ function moveNet(net) {
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
 var inputStore = {
     //eLL1 = eyeLineLeftnumber1, eLRight2 etc.
-    eLR0:{value:pnrand()}
+    	eLR0:{value:pnrand()},
 	eLR1:{value:pnrand()},
 	eLR2:{value:pnrand()},
 	eLR3:{value:pnrand()},
 	eLR4:{value:pnrand()},
 
-    eLR0:{value:pnrand()}
+    	eLR0:{value:pnrand()},
 	eLL1:{value:pnrand()},
 	eLL2:{value:pnrand()},
 	eLL3:{value:pnrand()},
@@ -392,7 +392,7 @@ function checkEye(org, eye) {
     }
 }
 
-lineCircle(pop[90].morph.eye.pos.r.x, pop[90].morph.eye.pos.r.y, pop[90].morph.eye.pos.r[2].x, pop[90].morph.eye.pos.r[2].y, pop[99].x, pop[99].y, pop[99].radius);
+//lineCircle(pop[90].morph.eye.pos.r.x, pop[90].morph.eye.pos.r.y, pop[90].morph.eye.pos.r[2].x, pop[90].morph.eye.pos.r[2].y, pop[99].x, pop[99].y, pop[99].radius);
 
 function lineCircle(xe, ye, xt, yt, xc, yc, r) {
     circle(xe, ye, 3, "red", 3)
