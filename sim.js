@@ -1,4 +1,4 @@
-// idk why I am putting this here but this a very usefl resource for later use http://marinepalaeoecology.org/wp-content/uploads/2016/11/Scheffers_at_al_CC_impacts_Science_2016.pdf
+// idk why I am putting this here but this a very useful resource for later use http://marinepalaeoecology.org/wp-content/uploads/2016/11/Scheffers_at_al_CC_impacts_Science_2016.pdf
 var canvas = geid('canvas');
 var ctx = canvas.getContext('2d');
 
@@ -79,13 +79,13 @@ function makePlant(arrayPos, cal, posX, posY) {
 //I need to turn up down left right into a b c d. MUUUCH LESS CONFUSING.
 
 //merely iterates at some amount of time. 1000 = 1 second per iteration.
-
+var running = false;
 function run(msecs) {
 	if (running === true){
 		console.log("Error in function: 'run', Time is already passing, use stop and run again.");
 		return;
 	}
-	time = setInterval(msecs, iterate);
+	time = setInterval(iterate, msecs);
 	running = true;
 }
 function stop() {
@@ -407,16 +407,34 @@ function checkEye(org, eye) {
 //lineCircle(pop[90].morph.eye.pos.r.x, pop[90].morph.eye.pos.r.y, pop[90].morph.eye.pos.r[2].x, pop[90].morph.eye.pos.r[2].y, pop[99].x, pop[99].y, pop[99].radius);
 
 function lineCircle(xe, ye, xt, yt, xc, yc, r) {
+    
+   var area = Math.abs((xt-xe)*(yc-ye) - (xc-xe)*(yt-ye));
+   var lab = Math.sqrt(findDis(xe, ye, xt, yt));
+   var h = area/lab;
+    if(h < r) {
+        return 1;
+    } else {
+        return 0;
+    }
+   /*
+   dx = xt-xe)/lab;
+   dy = (yt-ye)/lab;
+
+   t = dx*(xc-xe) + dy*(yc-xe)
+   
+   
    /* circle(xe, ye, 3, "red", 3)
     circle(xt, yt, 3, "green", 3)
-    circle(xc, yc, r, "blue", 3)
-    */
+    circle(xc, yc, r, "blue", 3) star/
+    
      gvalue = Math.abs((xt-xe)*xc + (ye-yt)*yc + (xe-xt)*ye + xe*(yt-ye))/Math.sqrt((xt-xe)*(xt-xe) + (ye-yt)*(ye-yt))
     if(gvalue <= r) {
         return 1;
     } else {
         return 0;
     }
+    
+    */
 }
 
 /*Math.abs((xt-xe)*xc + (ye-yt)*yc + (xe-xt)*ye + xe*(yt-ye))/Math.sqrt((xt-xe)*(xt-xe) + (ye-yt)*(ye-yt)) from
@@ -506,7 +524,7 @@ function circle(centerX, centerY, radius, color, width) {
 }
 
 function iterate() {
-    for(var j = 0; j < 5; j++) {
+    for(var j = 0; j < 1; j++) {
         for (var i = 0; i < pop.length; i++) {
             checkEye(pop[i], "r");
             checkEye(pop[i], "l");
