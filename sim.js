@@ -384,7 +384,7 @@ function checkEye(org, eye) {
         var eyeDis = Math.sqrt(findDis(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y, pop[k].x, pop[k].y));
         if (eyeDis > pop[k].r + org.morph.eye.range) {
             for (var j = 0; j < org.morph.eyeRes; j++) {
-                org.nn.inputs[eyeInput + j].value = 0;
+                org.nn.inputs[eyeInput + j].value = -1;
 
                 break;
             }
@@ -414,7 +414,7 @@ function lineCircle(xe, ye, xt, yt, xc, yc, r) {
     if(h < r) {
         return 1;
     } else {
-        return 0;
+        return -1;
     }
    /*
    dx = xt-xe)/lab;
@@ -522,9 +522,9 @@ function circle(centerX, centerY, radius, color, width) {
     }
     ctx.stroke();
 }
-
+var bth = 0;
 function iterate() {
-    for(var j = 0; j < 1; j++) {
+    for (var j = 0; j < 1; j++) {
         for (var i = 0; i < pop.length; i++) {
             checkEye(pop[i], "r");
             checkEye(pop[i], "l");
@@ -544,8 +544,9 @@ function iterate() {
     
         }
     }
-        render();
-        
+    bth++
+   render();
+
 }
 
 
