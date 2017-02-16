@@ -42,7 +42,7 @@ function newPop(popCount) {
     //clearCanvas();
 
     for (var i = 0; i < popCount; i++) {
-        pop[i] = makeOrg(4, 3, decideGender(), rand(), i, rand() * worldW, rand() * worldH, rand() * 2 * Math.PI, rand() * Math.PI / 2, rand() * Math.PI / 2, rand() * Math.PI, 100, 10, 10);
+        pop[i] = makeOrg(4, 3, decideGender(), rand(), i, rand() * worldW, rand() * worldH, rand() * 2 * Math.PI, rand() * Math.PI, rand() * Math.PI / 2, rand() * Math.PI, 100, 10, 10);
         //ctx.fillStyle="rgb("+2.55*pop[i].diet + ",0," + 255/pop[i].diet + ")";
         //ctx.fillText(i,pop[i].xPos,pop[i].yPos);
     }
@@ -147,7 +147,7 @@ function buildNet(hnCount, hlCount) {
 		  var nID = "node"+j;
 			nn.hLayers[lID][nID] = {
 				nodeNumber: j,
-				value:0 //this is merely the start value. it will change eveytime it updates.
+				value:0 //this is merely the start value. it will change everytime it updates.
 			};
 		}
 	}
@@ -338,34 +338,56 @@ function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, ey
     org.morph.colorGene = color;
     org.morph.color = getColor(color);
     org.morph.gender = gender;
-    
     //pos is an angle.
     org.morph.eye = {};
     org.morph.eyePos = eyePos;
-    
     org.morph.eyeRot = eyeRot;
-    
     org.radius = 10;
     org.morph.eyeRes = 5;
-    
     //eye resolution, how manny sightlines
     //todo: _____!!!! think about body shape, should it differ with age/health?
     //current values not associated directly with other stuff like nn or morph.
     org.health = health;
     org.hunger = hunger;
     //high hunger values good, there will be a max.possibly overeating.
-    
     //in relation to center of head
     org.morph.eye.breadth = eyeBreadth;
     org.morph.eye.pos = {};
     org.morph.eye.range = eyeRange;
     getEyes(org);
     //in relation to eye.
-    
-
     return org;
 }
-
+function mutate(org) {
+    //0.02 is my arbitrary mutation rate
+    for(var input in org.nn.inputs) {
+        if(typeof(org.nn.inputs[input]) == "number") {
+            continue;
+        }
+        
+        for(var inTo in org.nn.inputs[input]) {
+            if(inTo != "synapse" && typeof(org.nn.inputs[input][inTo] != "number") ) {
+                for(var toNode in org.nn.inputs[input][inTo]){
+                    if(typeof(org.nn.inputs[input][inTo][toNode]) == "number") {
+                        continue;
+                    } else if (rand() < 0.02) {
+                        org.nn.inputs[input][inTo][toNode].synapse = rand();
+                        console.log("mutate")
+                    }
+                }
+                continue;
+            }
+            if (rand() < 0.02) {
+                org.nn.inputs[input].synapse = rand();
+                console.log("mutation")
+            } else {
+                continue;
+            }
+            
+            
+        }
+    }
+}
 function checkEye(org, eye) {
     if(eye == "r") {
         var eyeInput = "eLR";
