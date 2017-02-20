@@ -23,8 +23,8 @@ function pnrand() {
 function deepClone(a) {
   return JSON.parse(JSON.stringify(a));
 }
-worldW = 1000;
-worldH = 1000;
+var worldW = 1000;
+var worldH = 1000;
 canvas.width = worldW;
 canvas.height = worldH;
 ctx.font = "10px Arial";
@@ -38,15 +38,12 @@ var pop = [];
 
 //eventually i will add arguments to this function (hnCount, hlCount, popCount), etc.
 function newPop(popCount) {
-    pop = [];
-    //clearCanvas();
-
-    for (var i = 0; i < popCount; i++) {
-        pop[i] = makeOrg(4, 3, decideGender(), rand(), i, rand() * worldW, rand() * worldH, rand() * 2 * Math.PI, rand() * Math.PI, rand() * Math.PI / 2, rand() * Math.PI, 100, 10, 10);
-        //ctx.fillStyle="rgb("+2.55*pop[i].diet + ",0," + 255/pop[i].diet + ")";
-        //ctx.fillText(i,pop[i].xPos,pop[i].yPos);
-    }
-
+  pop = [];
+  for (var i = 0; i < popCount; i++) {
+    pop[i] = makeOrg(4, 3, decideGender(), rand(), i, rand() * worldW, rand() * worldH,
+        rand() * 2 * Math.PI, rand() * Math.PI, rand() * Math.PI / 2, rand() * Math.PI, 100, 100, 10);
+    //makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, eyeRot, eyeBreadth, eyeRange, health, hunger)
+  }
 }
 
 var plants = [];
@@ -390,7 +387,7 @@ function checkEye(org, eye) {
     }
 
     for (var k = 0; k < pop.length; k++) {
-        if (k == org.index) {
+        if (k == org.index || pop[k] == null) {
             continue; //do not look at self
         }
         var target = pop[k];
@@ -507,7 +504,9 @@ function render() {
     clearCanvas();
     for(var i = 0; i < pop.length; i++) {
         var org = pop[i];
-
+        if (org == null) {
+          continue;
+        }
         circle(org.x, org.y, org.radius, org.morph.color);
         ctx.fillText(i, org.x - org.radius/2, org.y + org.radius/2);
         for(var j = 0; j < org.morph.eyeRes; j++){
@@ -546,17 +545,38 @@ var maxspeed = 100;
 function iterate() {
   for (var j = 0; j < 1; j++) {
     for (var i = 0; i < pop.length; i++) {
-      checkEye(pop[i], "r");
-      checkEye(pop[i], "l");
-      readNet(pop[i].nn);
+      var org = pop[i];
+      if (org == null) {
+        continue;
+      }
+      checkEye(org, "r");
+      checkEye(org, "l");
+      readNet(org.nn);
     }
     for (var i = 0; i < pop.length; i++) {
-      pop[i].rot += pop[i].nn.outputs.rot.value;
-      pop[i].x += Math.cos(pop[i].rot) * pop[i].nn.outputs.speed.value*maxspeed;
-      pop[i].y -= Math.sin(pop[i].rot) * pop[i].nn.outputs.speed.value*maxspeed;
-    }
-    for (var i = 0; i < pop.length; i++) {
-      getEyes(pop[i])
+      var org = pop[i];
+      if (org == null) {
+        continue;
+      }
+      org.rot += org.nn.outputs.rot.value;
+      org.x += Math.cos(org.rot) * org.nn.outputs.speed.value*maxspeed;
+      if (org.x > worldW) {
+        org.x -= worldW;
+      } else if (org.x < 0) {
+        org.x += worldW;
+      }
+      org.y -= Math.sin(org.rot) * org.nn.outputs.speed.value*maxspeed;
+      if (org.y > worldH) {
+        org.y -= worldH;
+      } else if (org.y < 0) {
+        org.y += worldH;
+      }
+      getEyes(org);
+      org.health -= Math.abs(org.nn.outputs.speed.value);
+      if (org.health <= 0) {
+        console.log("death of " + org.index);
+        pop[i] = null;
+      }
     }
   }
   iterations++;
