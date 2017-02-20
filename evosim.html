@@ -8,7 +8,9 @@
     <button id="render-button"type="button" onclick="render()">render</button>
     <button id="newPop-button"type="button" onclick="newPop(geid('popNum').value);">new population</button>
     <input type="text" id="popNum" value="2" />
-    <button id="run-button"type="button" onclick="iterate()">iterate</button>
+    <button id="run-fast"type="button" onclick="stop(); run(1);">run fast</button>
+    <button id="run-slow"type="button" onclick="stop(); run(250);">run slow</button>
+    <button id="iterate"type="button" onclick="stop(); iterate();">iterate/stop</button>
 		<script type="text/javascript" src="xor4096.js"></script>
 		<script type="text/javascript" src="sim.js"></script>
 	  	<script type="text/javascript" src="utility.js"></script>

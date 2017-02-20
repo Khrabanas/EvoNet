@@ -80,6 +80,7 @@ function makePlant(arrayPos, cal, posX, posY) {
 
 //merely iterates at some amount of time. 1000 = 1 second per iteration.
 var running = false;
+var time = null;
 function run(msecs) {
 	if (running === true){
 		console.log("Error in function: 'run', Time is already passing, use stop and run again.");
@@ -89,30 +90,24 @@ function run(msecs) {
 	running = true;
 }
 function stop() {
-	if (running === false) {
-		console.log("Error in fuction: 'stop', Already stopped.");
-	}
-	clearInterval(time);
-	running = false;
+  if (time != null) {
+    clearInterval(time);
+    time = null;
+  }
+  running = false;
 }
 //each step of the simulation is contained in an iteration.
-//PROBLEM I NEED TO FIX: Make it so that they only move after every network has analyzed the current setup.
 
-//takes the "speed value" from the network and turns it into a distance traveled within my parameters.
-function moveNet(net) {
-	net.xPos = net.xPos - (net.speed * Math.cos(net.rot))/2;
-	net.yPos = net.yPos - (net.speed * Math.sin(net.rot))/2;
-}
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
 var inputStore = {
-    //eLL1 = eyeLineLeftnumber1, eLRight2 etc.
-    eLR0:{value:pnrand()},
+  //eLL1 = eyeLineLeftnumber1, eLRight2 etc.
+  eLR0:{value:pnrand()},
 	eLR1:{value:pnrand()},
 	eLR2:{value:pnrand()},
 	eLR3:{value:pnrand()},
 	eLR4:{value:pnrand()},
 
-    eLL0:{value:pnrand()},
+  eLL0:{value:pnrand()},
 	eLL1:{value:pnrand()},
 	eLL2:{value:pnrand()},
 	eLL3:{value:pnrand()},
@@ -136,7 +131,7 @@ function buildNet(hnCount, hlCount) {
 	nn.inputs = deepClone(inputStore);
 	nn.outputs = deepClone(outputStore);
 	var inputLength = Object.keys(inputStore).length;
-	nn.hLayers.totalNumberOfNodes = hnCount * hlCount  + inputLength;
+	nn.hLayers.totalNumberOfNodes = hnCount*hlCount + inputLength;
 	for (var i = 0; i < hlCount; i++) {
 	  var lID = "layer"+i;
 		nn.hLayers[lID] = {
@@ -243,71 +238,62 @@ function readNet(nn) {
 		if (!nn.hLayers.hasOwnProperty(layer) || typeof(nn.hLayers[layer].layerNumber) !== "number") {
 			continue;
 		}
-		for(var node in nn.hLayers[layer]) {
-			if (!nn.hLayers[layer].hasOwnProperty(node) || typeof(nn.hLayers[layer][node].nodeNumber) !== "number" ) {
+    var thisLayer = nn.hLayers[layer];
+		for(var node in thisLayer) {
+			if (!thisLayer.hasOwnProperty(node) || typeof(thisLayer[node].nodeNumber) !== "number" ) {
 				continue;
 			}
-			nn.hLayers[layer][node].value = 0;
+			thisLayer[node].value = 0;  // reset value before adding input signals
 
+      var weight = 1.0/thisLayer.numOfPrevNodes;
 			for (var input in nn.inputs){
-			    if (!nn.inputs.hasOwnProperty(input)) {
-			        continue;
-			    }
-
-			    nn.hLayers[layer][node].value += (nn.inputs[input][layer][node].synapse * nn.inputs[input].value)/nn.hLayers.totalNumberOfNodes;
+			  if (!nn.inputs.hasOwnProperty(input)) {
+			    continue;
+			  }
+        var thisInput = nn.inputs[input];
+			  thisLayer[node].value += weight*(thisInput[layer][node].synapse * thisInput.value);
 			}
+
+      var layerNum = thisLayer.layerNumber;
 			for (var prevLayer in nn.hLayers) {
-		        if (!nn.hLayers.hasOwnProperty(prevLayer) || nn.hLayers[layer].layerNumber <= nn.hLayers[prevLayer].layerNumber || typeof(nn.hLayers[prevLayer].layerNumber) !== "number") {
-		            continue;
-		        }
-		        for (var prevNode in nn.hLayers[prevLayer]) {
-		            if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode) || typeof(nn.hLayers[prevLayer][prevNode].nodeNumber) !== "number") {
-				        continue;
-			        }
-			        nn.hLayers[layer][node].value += (nn.synapses[prevLayer][prevNode][layer][node].value * nn.hLayers[prevLayer][prevNode].value)/nn.hLayers[layer].numOfPrevNodes;
-
-		           // nn.hLayers[layer][node].value /= nn.hLayers[layer].numOfPrevNodes;
-		        }
+		    if (!nn.hLayers.hasOwnProperty(prevLayer) || typeof(nn.hLayers[prevLayer].layerNumber) !== "number" || layerNum <= nn.hLayers[prevLayer].layerNumber) {
+		      continue; // not a previous layer.
+		    }
+		    for (var prevNode in nn.hLayers[prevLayer]) {
+		      if (!nn.hLayers[prevLayer].hasOwnProperty(prevNode) || typeof(nn.hLayers[prevLayer][prevNode].nodeNumber) !== "number") {
+				    continue;
+			    }
+			    thisLayer[node].value += weight*(nn.synapses[prevLayer][prevNode][layer][node].value * nn.hLayers[prevLayer][prevNode].value);
+        }
 			}
-
 		}
 	}
-    for (var output in nn.outputs) {
-        if (!nn.outputs.hasOwnProperty(output)) {
-            continue;
-        }
-
-        for (var inputOut in nn.inputs) {
-            if (!nn.inputs.hasOwnProperty(inputOut)) {
-                continue;
-            }
-
-
-
-
-                nn.outputs[output].value += (nn.inputs[inputOut][output].synapse * nn.inputs[inputOut].value)/nn.hLayers.totalNumberOfNodes;
-
-
-        }
-
-        for (var layerOut in nn.hLayers) {
-            if (!nn.hLayers.hasOwnProperty(layerOut) || typeof(nn.hLayers[layerOut].layerNumber) == "number") {
-                continue;
-            }
-
-            for (var nodeOut in nn.hLayers[layerOut]){
-                if (!nn.hLayers[layerOut].hasOwnProperty(nodeOut) || typeof(nn.hLayers[layerOut][nodeOut].nodeNumber) == "number") {
-                    continue;
-                }
-                nn.outputs[output].value += (nn.hLayers[layerOut][nodeOut].value * nn.synapses[layerOut][nodeOut].ouputs[output].synapse)/nn.hLayers.totalNumberOfNodes;
-
-            }
-        }
-
-      //probably in the wrong place too  nn.outputs[output].value /= nn.hLayers.totalNumberOfNodes;
+  var weight = 1.0/nn.hLayers.totalNumberOfNodes;
+  for (var output in nn.outputs) {
+    if (!nn.outputs.hasOwnProperty(output)) {
+      continue;
     }
-}
+    nn.outputs[output].value = 0;
+    for (var inputOut in nn.inputs) {
+      if (!nn.inputs.hasOwnProperty(inputOut)) {
+        continue;
+      }
+      nn.outputs[output].value += weight*(nn.inputs[inputOut][output].synapse * nn.inputs[inputOut].value);
+    }
 
+    for (var layerOut in nn.hLayers) {
+      if (!nn.hLayers.hasOwnProperty(layerOut) || typeof(nn.hLayers[layerOut].layerNumber) == "number") {
+        continue;
+      }
+      for (var nodeOut in nn.hLayers[layerOut]){
+        if (!nn.hLayers[layerOut].hasOwnProperty(nodeOut) || typeof(nn.hLayers[layerOut][nodeOut].nodeNumber) == "number") {
+          continue;
+        }
+        nn.outputs[output].value += weight*(nn.hLayers[layerOut][nodeOut].value * nn.synapses[layerOut][nodeOut].ouputs[output].synapse);
+      }
+    }
+  }
+}
 
 function decideGender() {
     if (rand() < 0.5) {
@@ -332,7 +318,7 @@ function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, ey
     org.y = y;
     org.rot = rot;
     org.nn = buildNet(hnCount, hlCount);
-    readNet(org);
+    readNet(org.nn);
     //morphology
     org.morph = {};
     org.morph.colorGene = color;
@@ -555,32 +541,26 @@ function circle(centerX, centerY, radius, color, width) {
     }
     ctx.stroke();
 }
-var bth = 0;
+var iterations = 0;
+var maxspeed = 100;
 function iterate() {
-    for (var j = 0; j < 1; j++) {
-        for (var i = 0; i < pop.length; i++) {
-            checkEye(pop[i], "r");
-            checkEye(pop[i], "l");
-            console.log("iterate eyes");
-            readNet(pop[i].nn);
-            //console.log(pop[i].nn.outputs.rot.value);
-        }
-        for (var i = 0; i < pop.length; i++) {
-            pop[i].rot += pop[i].nn.outputs.rot.value;
-            pop[i].x += Math.cos(pop[i].rot) * pop[i].nn.outputs.speed.value;
-            pop[i].y -= Math.sin(pop[i].rot) * pop[i].nn.outputs.speed.value;
-
-
-        }
-        for (var i = 0; i < pop.length; i++) {
-
-            getEyes(pop[i])
-
-        }
+  for (var j = 0; j < 1; j++) {
+    for (var i = 0; i < pop.length; i++) {
+      checkEye(pop[i], "r");
+      checkEye(pop[i], "l");
+      readNet(pop[i].nn);
     }
-    bth++
-   render();
-
+    for (var i = 0; i < pop.length; i++) {
+      pop[i].rot += pop[i].nn.outputs.rot.value;
+      pop[i].x += Math.cos(pop[i].rot) * pop[i].nn.outputs.speed.value*maxspeed;
+      pop[i].y -= Math.sin(pop[i].rot) * pop[i].nn.outputs.speed.value*maxspeed;
+    }
+    for (var i = 0; i < pop.length; i++) {
+      getEyes(pop[i])
+    }
+  }
+  iterations++;
+  render();
 }
 
 
