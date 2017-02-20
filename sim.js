@@ -158,13 +158,13 @@ function buildNet(hnCount, hlCount) {
 		//probably don't need to store this multiple times, but it does not matter much. not fully optimised, but clearer and easier to read and work with.
 		nn.inputs[input] = deepClone(nn.hLayers);
 		nn.inputs[input].value = inputStore[input].value;
-		
+
 		for(var output in nn.outputs) {
 			if (!nn.outputs.hasOwnProperty(output)) {
 				continue;
 			}
 			nn.inputs[input][output] = {synapse:pnrand()};
-			
+
 		}
 		//input is a,b,c,d.
 		//layer is layer1,layer2, etc.
@@ -185,7 +185,7 @@ function buildNet(hnCount, hlCount) {
 			}
 		}
 	}
-	
+
 	nn.synapses = deepClone(nn.hLayers);
 	for (var synapseLayer in nn.synapses) {
 		if (!nn.synapses.hasOwnProperty(synapseLayer)) {
@@ -193,32 +193,32 @@ function buildNet(hnCount, hlCount) {
 		}
 		for (var synapseNode in nn.synapses[synapseLayer]) {
 			if (!nn.synapses[synapseLayer].hasOwnProperty(synapseNode) || typeof(nn.synapses[synapseLayer][synapseNode]) == "number") {
-				
+
 				continue;
 			}
-	
+
 			nn.synapses[synapseLayer][synapseNode] = deepClone(nn.hLayers);
 				//the split
 			//makes output synapses leading from the node.
-			
-			
-	
+
+
+
 			for (var nextLayer in nn.synapses[synapseLayer][synapseNode]) {
 				if (!nn.hLayers.hasOwnProperty(nextLayer) || nn.synapses[synapseLayer][synapseNode][nextLayer].layerNumber <= nn.synapses[synapseLayer].layerNumber) {
-				
+
 					delete nn.synapses[synapseLayer][synapseNode][nextLayer];
-				
+
 					continue;
 				}
-	
+
 				for (var nextNode in nn.synapses[synapseLayer][synapseNode][nextLayer]) {
 				    if (!nn.synapses[synapseLayer][synapseNode][nextLayer].hasOwnProperty(nextNode)) {
 				        continue;
 				    }
-				
+
 				    nn.synapses[synapseLayer][synapseNode][nextLayer][nextNode].value = pnrand();
-				
-				
+
+
 				}
 			}
 			nn.synapses[synapseLayer][synapseNode].outputs = {};
@@ -232,7 +232,7 @@ function buildNet(hnCount, hlCount) {
 			}
 		}
 	}
-	
+
 	return nn;
 }
 
@@ -248,12 +248,12 @@ function readNet(nn) {
 				continue;
 			}
 			nn.hLayers[layer][node].value = 0;
-			
+
 			for (var input in nn.inputs){
 			    if (!nn.inputs.hasOwnProperty(input)) {
 			        continue;
 			    }
-			    
+
 			    nn.hLayers[layer][node].value += (nn.inputs[input][layer][node].synapse * nn.inputs[input].value)/nn.hLayers.totalNumberOfNodes;
 			}
 			for (var prevLayer in nn.hLayers) {
@@ -265,42 +265,42 @@ function readNet(nn) {
 				        continue;
 			        }
 			        nn.hLayers[layer][node].value += (nn.synapses[prevLayer][prevNode][layer][node].value * nn.hLayers[prevLayer][prevNode].value)/nn.hLayers[layer].numOfPrevNodes;
-			        
+
 		           // nn.hLayers[layer][node].value /= nn.hLayers[layer].numOfPrevNodes;
 		        }
 			}
-			
+
 		}
 	}
     for (var output in nn.outputs) {
         if (!nn.outputs.hasOwnProperty(output)) {
             continue;
         }
-        
+
         for (var inputOut in nn.inputs) {
             if (!nn.inputs.hasOwnProperty(inputOut)) {
                 continue;
             }
-            
 
 
-            
+
+
                 nn.outputs[output].value += (nn.inputs[inputOut][output].synapse * nn.inputs[inputOut].value)/nn.hLayers.totalNumberOfNodes;
-            
-            
+
+
         }
-        
+
         for (var layerOut in nn.hLayers) {
             if (!nn.hLayers.hasOwnProperty(layerOut) || typeof(nn.hLayers[layerOut].layerNumber) == "number") {
                 continue;
             }
-            
+
             for (var nodeOut in nn.hLayers[layerOut]){
                 if (!nn.hLayers[layerOut].hasOwnProperty(nodeOut) || typeof(nn.hLayers[layerOut][nodeOut].nodeNumber) == "number") {
                     continue;
                 }
                 nn.outputs[output].value += (nn.hLayers[layerOut][nodeOut].value * nn.synapses[layerOut][nodeOut].ouputs[output].synapse)/nn.hLayers.totalNumberOfNodes;
-                
+
             }
         }
 
@@ -364,7 +364,7 @@ function mutate(org) {
         if(typeof(org.nn.inputs[input]) == "number") {
             continue;
         }
-        
+
         for(var inTo in org.nn.inputs[input]) {
             if(inTo != "synapse" && typeof(org.nn.inputs[input][inTo] != "number") ) {
                 for(var toNode in org.nn.inputs[input][inTo]){
@@ -383,94 +383,105 @@ function mutate(org) {
             } else {
                 continue;
             }
-            
-            
+
+
         }
     }
 }
 function checkEye(org, eye) {
+  var eyeInput;
     if(eye == "r") {
-        var eyeInput = "eLR";
+        eyeInput = "eLR";
     }else if(eye == "l") {
-        var eyeInput = "eLL"
+        eyeInput = "eLL"
     } else {
         throw "Invalid eye asked for; use l (left) or r (right) for the checkEye function.";
         return;
     }
-    
-    //for right eye
+
+    for (var j = 0; j < org.morph.eyeRes; j++) {
+        org.nn.inputs[eyeInput + j].value = -1;
+    }
+
     for (var k = 0; k < pop.length; k++) {
-        if(k == org.index) {
+        if (k == org.index) {
+            continue; //do not look at self
+        }
+        var target = pop[k];
+        //eye distance is distance between eye and the radius center of another organism.
+        var eyeDis = Math.sqrt(findDis(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y, target.x, target.y));
+        if (eyeDis > target.r + org.morph.eye.range) {
+          continue; //target out of range.
+        } else if (eyeDis < target.r) {
+          for (var j = 0; j < org.morph.eyeRes; j++) {
+            org.nn.inputs[eyeInput + j].value = 1;
+          }
+          break; //eye is on top of a target.
+        }
+
+        for (var j = 0; j < org.morph.eyeRes; j++) {
+          if (org.nn.inputs[eyeInput + j].value == 1) {
             continue;
-        }
-        var eyeDis = Math.sqrt(findDis(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y, pop[k].x, pop[k].y));
-        if (eyeDis > pop[k].r + org.morph.eye.range) {
-            for (var j = 0; j < org.morph.eyeRes; j++) {
-                org.nn.inputs[eyeInput + j].value = -1;
-
-                break;
-            }
-        }
-        else if (eyeDis < pop[k].r) {
-            for (var j = 0; j < org.morph.eyeRes; j++) {
-                org.nn.inputs[eyeInput + j].value = 1;
-
-                break;
-            }
-        }
-        else {
-            for (var j = 0; j < org.morph.eyeRes; j++) {
-                org.nn.inputs[eyeInput + j].value = lineCircle(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y, org.morph.eye.pos[eye][j].x, org.morph.eye.pos[eye][j].y, pop[k].x, pop[k].y, pop[k].radius);
-            }
+          }
+          org.nn.inputs[eyeInput + j].value = lineToPulse(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y,
+              org.morph.eye.pos[eye][j].x, org.morph.eye.pos[eye][j].y, target.x, target.y, target.radius);
         }
     }
 }
 
-//lineCircle(pop[90].morph.eye.pos.r.x, pop[90].morph.eye.pos.r.y, pop[90].morph.eye.pos.r[2].x, pop[90].morph.eye.pos.r[2].y, pop[99].x, pop[99].y, pop[99].radius);
+//lineToPulse(pop[90].morph.eye.pos.r.x, pop[90].morph.eye.pos.r.y, pop[90].morph.eye.pos.r[2].x, pop[90].morph.eye.pos.r[2].y, pop[99].x, pop[99].y, pop[99].radius);
+function lineCircle(x1, y1, x2, y2, x3, y3, r) {
+  var r2 = r*r;
+  //is either end point inside the circle
+  var dx1 = x1 - x3;
+  var dy1 = y1 - y3;
+  if (r2>=dx1*dx1 + dy1*dy1) {
+    return true;
+  }
+  var dx2 = x2 - x3;
+  var dy2 = y2 - y3;
+  if (r2>=dx2*dx2 + dy2*dy2) {
+    return true;
+  }
+//discover (xc, yc) which is the point of closest approah of line to center of circle.
+  var xc;
+  var yc;
+  if (x1 == x2) {
+  //special case of vertical line
+    xc = x1;
+    yc = y3;
+  } else {
+    var m12 = (y2-y1)/(x2-x1);
+    var c12 = (x1*y2-y1*x2)/(x1-x2);
+    var c3 = y3+x3/m12;
+    xc = m12*(c3-c12)/(1+m12*m12);
+    yc = m12*xc+c12;
+  }
+//determine if (xc, yc) is between (x1, y1) and and (x2, y2)
+  if (Math.abs(x1-x2) > Math.abs(y1-y2)) {
+    if (!((xc >= x1 && xc <= x2) || (xc >= x2 && xc <= x1))) {
+      return false;
+    }
+  } else {
+    if (!((yc >= y1 && yc <= y2) || (yc >= y2 && yc <= y1))) {
+      return false;
+    }
+  }
+//determine if (xc, yc) is within circle of radius r and centered (x3, y3)
+  var dx = xc - x3;
+  var dy = yc - y3;
+  return (r2 >= dx*dx + dy*dy);
+}
 
-function lineCircle(xe, ye, xt, yt, xc, yc, r) {
-    
-   var area = Math.abs((xt-xe)*(yc-ye) - (xc-xe)*(yt-ye));
-   var lab = Math.sqrt(findDis(xe, ye, xt, yt));
-   var h = area/lab;
-    if(h < r) {
+
+function lineToPulse(x1, y1, x2, y2, x3, y3, r) {
+  var lineAnswer = lineCircle(x1, y1, x2, y2, x3, y3, r);
+    if(lineAnswer == true) {
         return 1;
     } else {
         return -1;
     }
-   /*
-   dx = xt-xe)/lab;
-   dy = (yt-ye)/lab;
-
-   t = dx*(xc-xe) + dy*(yc-xe)
-   
-   
-   /* circle(xe, ye, 3, "red", 3)
-    circle(xt, yt, 3, "green", 3)
-    circle(xc, yc, r, "blue", 3) star/
-    
-     gvalue = Math.abs((xt-xe)*xc + (ye-yt)*yc + (xe-xt)*ye + xe*(yt-ye))/Math.sqrt((xt-xe)*(xt-xe) + (ye-yt)*(ye-yt))
-    if(gvalue <= r) {
-        return 1;
-    } else {
-        return 0;
-    }
-    
-    */
 }
-
-/*Math.abs((xt-xe)*xc + (ye-yt)*yc + (xe-xt)*ye + xe*(yt-ye))/Math.sqrt((xt-xe)*(xt-xe) + (ye-yt)*(ye-yt)) from
- changed y's to negative, might work.
-
-@MISC {275533,
-    TITLE = {Check if line intersects with circles perimeter},
-    AUTHOR = {Santosh Linkha (http://math.stackexchange.com/users/2199/santosh-linkha)},
-    HOWPUBLISHED = {Mathematics Stack Exchange},
-    NOTE = {URL:http://math.stackexchange.com/q/275533 (version: 2013-01-11)},
-    EPRINT = {http://math.stackexchange.com/q/275533},
-    URL = {http://math.stackexchange.com/q/275533}
-}
-*/
 
 
 
@@ -478,7 +489,7 @@ function lineCircle(xe, ye, xt, yt, xc, yc, r) {
 
 
 function getEyes(org){ //working on this right now.
- 
+
     //center coords are org.x and org.y
     org.morph.eye.pos.r = {
         x: org.x + Math.cos(org.rot - org.morph.eyePos)*org.radius,
@@ -498,10 +509,10 @@ function getEyes(org){ //working on this right now.
             y: org.morph.eye.pos.r.y - Math.sin(org.rot - offset) * org.morph.eye.range,
         }
         org.morph.eye.pos.l[i] = {
-        
+
             x: org.morph.eye.pos.l.x + Math.cos(org.rot + offset) * org.morph.eye.range,
             y: org.morph.eye.pos.l.y - Math.sin(org.rot + offset) * org.morph.eye.range,
-            
+
         }
     }
 }
@@ -510,22 +521,22 @@ function render() {
     clearCanvas();
     for(var i = 0; i < pop.length; i++) {
         var org = pop[i];
-        
+
         circle(org.x, org.y, org.radius, org.morph.color);
         ctx.fillText(i, org.x - org.radius/2, org.y + org.radius/2);
         for(var j = 0; j < org.morph.eyeRes; j++){
 
             //console.log(org.morph.eye.pos.r.x);
           //  console.log(org.morph.eye.pos.r.x);
-            
+
             line(org.morph.eye.pos.r.x, org.morph.eye.pos.r.y, org.morph.eye.pos.r[j].x, org.morph.eye.pos.r[j].y);
-            
+
             line(org.morph.eye.pos.l.x, org.morph.eye.pos.l.y, org.morph.eye.pos.l[j].x, org.morph.eye.pos.l[j].y);
         }
    }
 }
 function line(startX, startY, endX, endY) {
-    
+
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
@@ -534,7 +545,7 @@ function line(startX, startY, endX, endY) {
 
 function circle(centerX, centerY, radius, color, width) {
     ctx.beginPath();
-    
+
     ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
     ctx.strokeStyle = color;
     if (width != undefined) {
@@ -550,6 +561,7 @@ function iterate() {
         for (var i = 0; i < pop.length; i++) {
             checkEye(pop[i], "r");
             checkEye(pop[i], "l");
+            console.log("iterate eyes");
             readNet(pop[i].nn);
             //console.log(pop[i].nn.outputs.rot.value);
         }
@@ -557,13 +569,13 @@ function iterate() {
             pop[i].rot += pop[i].nn.outputs.rot.value;
             pop[i].x += Math.cos(pop[i].rot) * pop[i].nn.outputs.speed.value;
             pop[i].y -= Math.sin(pop[i].rot) * pop[i].nn.outputs.speed.value;
-    
-    
+
+
         }
         for (var i = 0; i < pop.length; i++) {
-    
+
             getEyes(pop[i])
-    
+
         }
     }
     bth++
