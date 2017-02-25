@@ -41,7 +41,7 @@ function newPop(popCount) {
   pop = [];
   for (var i = 0; i < popCount; i++) {
     pop[i] = makeOrg(4, 3, decideGender(), rand(), i, rand() * worldW, rand() * worldH,
-        rand() * 2 * Math.PI, rand() * Math.PI, rand() * Math.PI / 2, rand() * Math.PI, 100, 100, 10);
+        rand() * 2 * Math.PI, rand() * Math.PI / 2, rand() * Math.PI / 2, rand() * Math.PI, 100, 100, 10);
     //makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, eyeRot, eyeBreadth, eyeRange, health, hunger)
   }
 }
@@ -50,30 +50,24 @@ var plants = [];
 function newHabitat(plantCount) {
   plants = [];
   for (var i=0; i<plantCount;i++ ){
-	makePlant(i, 10, rand()*canvas.width, rand()*canvas.height);
+    makePlant(i, 25*rand(), rand()*canvas.width, rand()*canvas.height);
   }
-
 }
+
 //just does what it does
 function poputat(popCount) {
   newPop(popCount);
-  newHabitat(Math.round(popCount/2));
+  newHabitat(Math.round(popCount*2));
 }
-function makePlant(arrayPos, cal, posX, posY) {
+function makePlant(arrayPos, cal, x, y) {
   plants[arrayPos] = {
 	cal:cal,
-	posX:posX,
-	posY:posY,
-
+	x:x,
+	y:y,
+	index:arrayPos,
   };
 }
-//eye configuration should be this. labeled this way so that A syncs up with 0rad (B with PI/2, etc).
-//	B
-//
-//C   +   A (head/forward direction)=>>>
-//
-//	D
-//I need to turn up down left right into a b c d. MUUUCH LESS CONFUSING.
+
 
 //merely iterates at some amount of time. 1000 = 1 second per iteration.
 var running = false;
@@ -97,22 +91,24 @@ function stop() {
 
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
 var inputStore = {
-  //eLL1 = eyeLineLeftnumber1, eLRight2 etc.
-  eLR0:{value:pnrand()},
-	eLR1:{value:pnrand()},
-	eLR2:{value:pnrand()},
-	eLR3:{value:pnrand()},
-	eLR4:{value:pnrand()},
+    //eLL1 = eyeLineLeftnumber1, eLRight2 etc.
+    eLR0:{value:pnrand()},
+    eLR1:{value:-1},
+    eLR2:{value:-1},
+    eLR3:{value:-1},
+    eLR4:{value:-1},
 
-  eLL0:{value:pnrand()},
-	eLL1:{value:pnrand()},
-	eLL2:{value:pnrand()},
-	eLL3:{value:pnrand()},
-	eLL4:{value:pnrand()},
+    eLL0:{value:-1},
+    eLL1:{value:-1},
+    eLL2:{value:-1},
+    eLL3:{value:-1},
+    eLL4:{value:-1},
 };
 var outputStore = {
-	rot:{value:0},
-	speed:{value:0},
+    rot:{value:0},
+    speed:{value:0},
+    eat:{value:0},
+    mate:{value:0},
 };
 //nn.outputs[output].value
 
@@ -502,6 +498,11 @@ function getEyes(org){ //working on this right now.
 //render should not cause any change, just render the scenario. use iterate for
 function render() {
     clearCanvas();
+    for(var i = 0; i < plants.length; i++) {
+        var p = plants[i];
+        circle(p.x, p.y, p.cal, "green")
+        ctx.fillText(Math.round(100*p.cal)/100, p.x - p.cal/2, p.y + p.cal/2);
+    }
     for(var i = 0; i < pop.length; i++) {
         var org = pop[i];
         if (org == null) {
@@ -509,11 +510,8 @@ function render() {
         }
         circle(org.x, org.y, org.radius, org.morph.color);
         ctx.fillText(i, org.x - org.radius/2, org.y + org.radius/2);
+        
         for(var j = 0; j < org.morph.eyeRes; j++){
-
-            //console.log(org.morph.eye.pos.r.x);
-          //  console.log(org.morph.eye.pos.r.x);
-
             line(org.morph.eye.pos.r.x, org.morph.eye.pos.r.y, org.morph.eye.pos.r[j].x, org.morph.eye.pos.r[j].y);
 
             line(org.morph.eye.pos.l.x, org.morph.eye.pos.l.y, org.morph.eye.pos.l[j].x, org.morph.eye.pos.l[j].y);
@@ -521,7 +519,6 @@ function render() {
    }
 }
 function line(startX, startY, endX, endY) {
-
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
@@ -542,6 +539,21 @@ function circle(centerX, centerY, radius, color, width) {
 }
 var iterations = 0;
 var maxspeed = 100;
+
+function eat(org, plant) {
+    if(plant.cal <= 1) {
+        makePlant(plant.index, 25*rand(), rand()*canvas.width, rand()*canvas.height);
+        console.log("plant #"+plant.index+ " has died")
+    }
+    //10 is a nutrition modifier; should be changed.
+    if(findDis(org.x,org.y,plant.x,plant.y)<org.radius+plant.cal && org.nn.outputs.eat.value > 0) {
+        plant.cal -= org.nn.outputs.eat.value;
+        org.health += org.nn.outputs.eat.value * 10;
+        console.log(org.index + " gained " + org.nn.outputs.eat.value*10 + " and plant #" +plant.index+" lost " + org.nn.outputs.eat.value+" and is now "+ plant.cal);
+    }
+}
+
+
 function iterate() {
   for (var j = 0; j < 1; j++) {
     for (var i = 0; i < pop.length; i++) {
@@ -552,6 +564,9 @@ function iterate() {
       checkEye(org, "r");
       checkEye(org, "l");
       readNet(org.nn);
+      for(var l = 0; l < plants.length; l++){
+          eat(org, plants[l]);
+      }
     }
     for (var i = 0; i < pop.length; i++) {
       var org = pop[i];
@@ -587,5 +602,5 @@ function iterate() {
 
 function findDis(x1,y1,x2,y2) {
   return (x1-x2)*(x1-x2)+(y1-y2)*(y1-y2);
-  //requires a Math.sqrt to get actual value. this can be found in the getProx function.
+  //requires a Math.sqrt to get actual value.
 }
