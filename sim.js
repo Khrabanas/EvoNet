@@ -41,7 +41,7 @@ function newPop(popCount) {
   pop = [];
   for (var i = 0; i < popCount; i++) {
     pop[i] = makeOrg(4, 3, decideGender(), rand(), i, rand() * worldW, rand() * worldH,
-        rand() * 2 * Math.PI, rand() * Math.PI / 2, rand() * Math.PI / 2, rand() * Math.PI, 100, 100, 10);
+        rand() * 2 * Math.PI, rand() * Math.PI / 2, rand() * Math.PI / 2, rand() * Math.PI, 100, 30, 10);
     //makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, eyeRot, eyeBreadth, eyeRange, health, hunger)
   }
 }
@@ -92,7 +92,7 @@ function stop() {
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
 var inputStore = {
     //eLL1 = eyeLineLeftnumber1, eLRight2 etc.
-    eLR0:{value:pnrand()},
+    eLR0:{value:-1},
     eLR1:{value:-1},
     eLR2:{value:-1},
     eLR3:{value:-1},
@@ -103,6 +103,19 @@ var inputStore = {
     eLL2:{value:-1},
     eLL3:{value:-1},
     eLL4:{value:-1},
+
+    //same for plants; planteyeLineLeftnumber1
+    peLR0:{value:-1},
+    peLR1:{value:-1},
+    peLR2:{value:-1},
+    peLR3:{value:-1},
+    peLR4:{value:-1},
+
+    peLL0:{value:-1},
+    peLL1:{value:-1},
+    peLL2:{value:-1},
+    peLL3:{value:-1},
+    peLL4:{value:-1},
 };
 var outputStore = {
     rot:{value:0},
@@ -408,6 +421,49 @@ function checkEye(org, eye) {
     }
 }
 
+//for plants; better ways to prgram and all but I just want it to work and make sense. Above function for plants only.
+function checkEyePlants(org, eye) {
+  var eyeInput;
+    if(eye == "r") {
+        eyeInput = "peLR";
+    }else if(eye == "l") {
+        eyeInput = "peLL"
+    } else {
+        throw "Invalid eye asked for; use l (left) or r (right) for the checkEye function.";
+        return;
+    }
+
+    for (var j = 0; j < org.morph.eyeRes; j++) {
+        org.nn.inputs[eyeInput + j].value = -1;
+    }
+
+    for (var k = 0; k < plants.length; k++) {
+        if (plants[k] == null) {
+            continue; //no null plant
+        }
+        var target = plants[k];
+        //eye distance is distance between eye and the radius center of another organism.
+        var eyeDis = Math.sqrt(findDis(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y, target.x, target.y));
+        if (eyeDis > target.cal + org.morph.eye.range) {
+          continue; //target out of range.
+        } else if (eyeDis < target.r) {
+          for (var j = 0; j < org.morph.eyeRes; j++) {
+            org.nn.inputs[eyeInput + j].value = 1;
+          }
+          break; //eye is on top of a target.
+        }
+
+        for (var j = 0; j < org.morph.eyeRes; j++) {
+          if (org.nn.inputs[eyeInput + j].value == 1) {
+            continue;
+          }
+          org.nn.inputs[eyeInput + j].value = lineToPulse(org.morph.eye.pos[eye].x, org.morph.eye.pos[eye].y,
+              org.morph.eye.pos[eye][j].x, org.morph.eye.pos[eye][j].y, target.x, target.y, target.cal);
+        }
+    }
+}
+
+
 //lineToPulse(pop[90].morph.eye.pos.r.x, pop[90].morph.eye.pos.r.y, pop[90].morph.eye.pos.r[2].x, pop[90].morph.eye.pos.r[2].y, pop[99].x, pop[99].y, pop[99].radius);
 function lineCircle(x1, y1, x2, y2, x3, y3, r) {
   var r2 = r*r;
@@ -510,7 +566,7 @@ function render() {
         }
         circle(org.x, org.y, org.radius, org.morph.color);
         ctx.fillText(i, org.x - org.radius/2, org.y + org.radius/2);
-        
+
         for(var j = 0; j < org.morph.eyeRes; j++){
             line(org.morph.eye.pos.r.x, org.morph.eye.pos.r.y, org.morph.eye.pos.r[j].x, org.morph.eye.pos.r[j].y);
 
@@ -543,16 +599,25 @@ var maxspeed = 100;
 function eat(org, plant) {
     if(plant.cal <= 1) {
         makePlant(plant.index, 25*rand(), rand()*canvas.width, rand()*canvas.height);
-        console.log("plant #"+plant.index+ " has died")
+        //console.log("plant #"+plant.index+ " has died")
     }
     //10 is a nutrition modifier; should be changed.
-    if(findDis(org.x,org.y,plant.x,plant.y)<org.radius+plant.cal && org.nn.outputs.eat.value > 0) {
+    if(findDis(org.x,org.y,plant.x,plant.y)<(org.radius+plant.cal)*(org.radius+plant.cal) && org.nn.outputs.eat.value > 0) {
         plant.cal -= org.nn.outputs.eat.value;
         org.health += org.nn.outputs.eat.value * 10;
-        console.log(org.index + " gained " + org.nn.outputs.eat.value*10 + " and plant #" +plant.index+" lost " + org.nn.outputs.eat.value+" and is now "+ plant.cal);
+        //console.log(org.index + " gained " + org.nn.outputs.eat.value*10 + " and plant #" +plant.index+" lost " + org.nn.outputs.eat.value+" and is now "+ plant.cal);
     }
 }
-
+function birth(fem, male) {
+  var baby;
+  for (var i = 0; i < pop.length; i++) {
+    if (pop[i] == null) {
+      baby = pop[i];
+      break;
+    }
+  }
+  baby = pop;
+}
 
 function iterate() {
   for (var j = 0; j < 1; j++) {
@@ -563,6 +628,8 @@ function iterate() {
       }
       checkEye(org, "r");
       checkEye(org, "l");
+      checkEyePlants(org, "r");
+      checkEyePlants(org, "l");
       readNet(org.nn);
       for(var l = 0; l < plants.length; l++){
           eat(org, plants[l]);
