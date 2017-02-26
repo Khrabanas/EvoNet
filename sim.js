@@ -40,9 +40,9 @@ var pop = [];
 function newPop(popCount) {
   pop = [];
   for (var i = 0; i < popCount; i++) {
-    pop[i] = makeOrg(4, 3, decideGender(), rand(), i, rand() * worldW, rand() * worldH,
-        rand() * 2 * Math.PI, rand() * Math.PI / 2, rand() * Math.PI / 2, rand() * Math.PI, 100, 30, 10);
-    //makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, eyeRot, eyeBreadth, eyeRange, health, hunger)
+    var genes = {};
+    pop[i] = makeOrg(4, 3, i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, 30, genes);
+    pop[i].genes = genes;
   }
 }
 
@@ -87,8 +87,18 @@ function stop() {
   }
   running = false;
 }
-//each step of the simulation is contained in an iteration.
 
+function findSyn(genes, sid) {
+  return pnrand();
+}
+function findAttr(genes, aid){
+  return rand();
+}
+function setAttr(genes, aid, value) {
+
+  //if genes.attr[aid] is defined return it, else return value
+  return value;
+}
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
 var inputStore = {
     //eLL1 = eyeLineLeftnumber1, eLRight2 etc.
@@ -131,7 +141,7 @@ var outputStore = {
 //nn.inputs contains the input values as well as the synapses leading from them to the nodes and outputs.
 //nn.synapses is specifically for the synapses leading from the hidden nodes to the other hidden nodes and the ouputs.
 //nn.hLayers is the simple structure of the neural network, as well as the values for the nodes. No synapses should be stored here.
-function buildNet(hnCount, hlCount) {
+function buildNet(hnCount, hlCount, genes) {
 	var nn = {}; //new net
 	nn.hLayers = {};
 	nn.inputs = deepClone(inputStore);
@@ -164,25 +174,23 @@ function buildNet(hnCount, hlCount) {
 			if (!nn.outputs.hasOwnProperty(output)) {
 				continue;
 			}
-			nn.inputs[input][output] = {synapse:pnrand()};
-
+      var sid = input + " " + output;
+			nn.inputs[input][output] = {synapse: findSyn(genes, sid)};
 		}
 		//input is a,b,c,d.
 		//layer is layer1,layer2, etc.
 		//node is node0,node3, etc
 		//so, accessing the lowest synapse of the inputs is: "nn.inputs.a.layer0.node0.synapse"
-
 		for (var layer in nn.inputs[input]) {
 			if (!nn.inputs[input].hasOwnProperty(layer)) {
 				continue;
 			}
-
 			for (var node in nn.inputs[input][layer]) {
 				if (!nn.inputs[input][layer].hasOwnProperty(node)) {
 					continue;
 				}
-				nn.inputs[input][layer][node].synapse = pnrand();
-
+        var sid = input+" "+layer+" "+node;
+				nn.inputs[input][layer][node].synapse = findSyn(genes, sid);
 			}
 		}
 	}
@@ -216,8 +224,8 @@ function buildNet(hnCount, hlCount) {
 				    if (!nn.synapses[synapseLayer][synapseNode][nextLayer].hasOwnProperty(nextNode)) {
 				        continue;
 				    }
-
-				    nn.synapses[synapseLayer][synapseNode][nextLayer][nextNode].value = pnrand();
+            var sid = synapseLayer+" "+synapseNode+" "+nextLayer+" "+nextNode;
+				    nn.synapses[synapseLayer][synapseNode][nextLayer][nextNode].value = findSyn(genes, sid);
 
 
 				}
@@ -227,8 +235,9 @@ function buildNet(hnCount, hlCount) {
 				if (!nn.outputs.hasOwnProperty(outputSynapse)) {
 					continue;
 				}
+        var sid = synapseLayer+" "+synapseNode+" "+outputSynapse;
 				nn.synapses[synapseLayer][synapseNode].outputs[outputSynapse] = {
-					synapse: pnrand()
+					synapse: findSyn(genes, sid)
 				};
 			}
 		}
@@ -301,55 +310,52 @@ function readNet(nn) {
   }
 }
 
-function decideGender() {
-    if (rand() < 0.5) {
+function decideGender(genes) {
+    if (findAttr(genes, "gender") < 0.5) {
         return 'male';
     } else {
         return 'female';
     }
 }
 
-function getColor(value){
+function getColor(genes){
     //value from 0 to 1
+    var value = findAttr(genes, "color");
     var hue = ((1-value)*360).toString(10);
     return ["hsl(",hue,",100%,50%)"].join("");
 }
 
-
-//makeOrg(4, 3, decideGender(), rand(), i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, rand()*Math.PI/2, rand()*Math.PI/2, rand()*Math.PI, 50, 10, 10) eyePos and breadth should be only positive, position is 0-90 degrees, breadth is 0-180. eye rotation is the rotation of the eye in its position, 0-90 degrees.
-function makeOrg(hnCount, hlCount, gender, color, netHome, x, y, rot, eyePos, eyeRot, eyeBreadth, eyeRange, health, hunger) {
+//makeOrg(4, 3, i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, 30, genes)
+function makeOrg(hnCount, hlCount, netHome, x, y, rot, health, genes) {
     var org = {};
     org.index = netHome;
     org.x = x;
     org.y = y;
     org.rot = rot;
-    org.nn = buildNet(hnCount, hlCount);
+    org.health = health;
+
+    org.nn = buildNet(hnCount, hlCount, genes);
     readNet(org.nn);
     //morphology
     org.morph = {};
-    org.morph.colorGene = color;
-    org.morph.color = getColor(color);
-    org.morph.gender = gender;
+    org.morph.color = getColor(genes);
+    org.morph.gender = decideGender(genes);
     //pos is an angle.
     org.morph.eye = {};
-    org.morph.eyePos = eyePos;
-    org.morph.eyeRot = eyeRot;
-    org.radius = 10;
-    org.morph.eyeRes = 5;
+    org.morph.eyePos = findAttr(genes, "eyePos")*Math.PI/2;
+    org.radius = setAttr(genes, "radius", 10);
+    org.morph.eyeRes = setAttr(genes, "eyeRes", 5);
     //eye resolution, how manny sightlines
-    //todo: _____!!!! think about body shape, should it differ with age/health?
     //current values not associated directly with other stuff like nn or morph.
-    org.health = health;
-    org.hunger = hunger;
-    //high hunger values good, there will be a max.possibly overeating.
     //in relation to center of head
-    org.morph.eye.breadth = eyeBreadth;
+    org.morph.eye.breadth = findAttr(genes, "eyeBreadth")*Math.PI;
+    org.morph.eye.range = setAttr(genes, "eyeRange", 100);
     org.morph.eye.pos = {};
-    org.morph.eye.range = eyeRange;
     getEyes(org);
     //in relation to eye.
     return org;
 }
+
 function mutate(org) {
     //0.02 is my arbitrary mutation rate
     for(var input in org.nn.inputs) {
