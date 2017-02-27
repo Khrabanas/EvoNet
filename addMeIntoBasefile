@@ -1,6 +1,59 @@
 //this file is for copying stuff in to be added later
 
 
+
+
+
+
+
+var exGenes = {syn:{"example a":1, "example c":0.4}, attr:{"example b":1, "example d":0.4},};
+
+var waiting = [];
+function addWait(org, litterSize) {
+    for(var i = 0;; i++) {
+        if (waiting[i]===null) {
+            
+        }
+    }
+}
+function birth(orgF, orgM) { //combine, mutate, spawn
+    var mutationRate = 0.01;
+    var newGenes = orgF.genes;
+    
+    var sGenes = {syn:[true,false,true,true,"etc"], attr:[false, false, true, "etc"]}; //gotta actually make his based off of the length of arrays; true = female, false = male; actually i may as well decide the gene inside the loop where I generate the true/false  thing if I can.
+    for(){
+        if (rand()<mutationRate) {
+            
+        }
+        if(!sGenes.syn[i]) {
+            
+        }
+    }
+    
+    
+    for(var i = 0;; i++) {
+        if(pop[i] === null) {
+            var netHome = i;
+        }
+    }
+    if(orgF.gen > orgM.gen) {
+        var newGen = orgF.gen++;
+    } else {
+        var newGen = orgM.gen++;
+    }
+    makeOrg(hnCount, hlCount, netHome, orgF.x, orgF.y, orgF.rot, health, newGenes, newGen);
+}
+//hnCount and hlCount should be setAttr...
+
+
+
+
+
+
+
+
+
+
 //taken from jongo45's answer on http://stackoverflow.com/questions/7128675/from-green-to-red-color-depend-on-percentage
 //I will use for both for coloration and carnivore/herbivore, possibly more.
 function getColor(value){
