@@ -19,7 +19,7 @@ return xorRandom();
 function pnrand() {
 	return rand()*2 - 1;
 }
-//this function clones an array or object or whatever, so do not say theArrayIWant.somePartOfIt = otherArray, instead have theArrayIWant.somePartOfIt = deepClone(otherArray)
+//this function clones an array or object.
 function deepClone(a) {
   return JSON.parse(JSON.stringify(a));
 }
@@ -41,7 +41,7 @@ function newPop(popCount) {
   pop = [];
   for (var i = 0; i < popCount; i++) {
     var genes = newGenes();
-    pop[i] = makeOrg(4, 3, i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, 30, genes);
+    pop[i] = makeOrg(4, 3, i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, 30, genes, 0);
     pop[i].genes = genes;
   }
 }
@@ -349,14 +349,17 @@ function getColor(genes){
 }
 
 //makeOrg(4, 3, i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, 30, genes)
-function makeOrg(hnCount, hlCount, netHome, x, y, rot, health, genes) {
+function makeOrg(hnCount, hlCount, netHome, x, y, rot, health, genes, gen) {
     var org = {};
     org.index = netHome;
+    org.gen = gen;
     org.x = x;
     org.y = y;
     org.rot = rot;
     org.health = health;
-
+    org.hnCount = hnCount;
+    org.hlCount = hlCount;
+    org.mated = false;
     org.nn = buildNet(hnCount, hlCount, genes);
     readNet(org.nn);
     //morphology
@@ -379,36 +382,6 @@ function makeOrg(hnCount, hlCount, netHome, x, y, rot, health, genes) {
     return org;
 }
 
-function mutate(org) {
-    //0.02 is my arbitrary mutation rate
-    for(var input in org.nn.inputs) {
-        if(typeof(org.nn.inputs[input]) == "number") {
-            continue;
-        }
-
-        for(var inTo in org.nn.inputs[input]) {
-            if(inTo != "synapse" && typeof(org.nn.inputs[input][inTo] != "number") ) {
-                for(var toNode in org.nn.inputs[input][inTo]){
-                    if(typeof(org.nn.inputs[input][inTo][toNode]) == "number") {
-                        continue;
-                    } else if (rand() < 0.02) {
-                        org.nn.inputs[input][inTo][toNode].synapse = rand();
-                        console.log("mutate")
-                    }
-                }
-                continue;
-            }
-            if (rand() < 0.02) {
-                org.nn.inputs[input].synapse = rand();
-                console.log("mutation")
-            } else {
-                continue;
-            }
-
-
-        }
-    }
-}
 function checkEye(org, eye) {
   var eyeInput;
     if(eye == "r") {
@@ -637,7 +610,7 @@ function eat(org, plant) {
         //console.log(org.index + " gained " + org.nn.outputs.eat.value*10 + " and plant #" +plant.index+" lost " + org.nn.outputs.eat.value+" and is now "+ plant.cal);
     }
 }
-function birth(fem, male) {
+/*function birth(fem, male) {
   var baby;
   for (var i = 0; i < pop.length; i++) {
     if (pop[i] == null) {
@@ -646,7 +619,52 @@ function birth(fem, male) {
     }
   }
   baby = pop;
+} */
+
+function birth(orgF, orgM) {
+  var childHealth = 20; //eventually I need to base this off something.+
+  
+  var obj = org.genes;
+  var i = 0;
+  var bits = [];
+  var mutationRate = 0.01;
+  var newGenes = deepClone(orgF.genes);
+  for (var x in newGenes.syn) {
+    bits[i++] = {val:false, gene:x};
+  }
+  for (var i = bits.length/2; i > 0; i--) { //what if it runs over the same gene twice or more?
+    for(;;) {
+      var j = Math.floor(bits.length*rand());
+      if(rand()<mutationRate) {
+        bits[j].val = true;
+        newGenes.syn[bits[j].gene] = pnrand();
+        break;
+      } else if (!bits[j].val) {
+        bits[j].val = true;
+        newGenes.syn[bits[j].gene] = orgM.genes.syn[bits[j].gene];
+        break;
+      }
+    }
+  }
+  
+  
+  
+  var newHome = null;
+  for(var i = 0;; i++) {
+    if(pop[i] === null) {
+       newHome = i;
+    }
+  }
+  var newGen = 1;
+  if(orgF.gen > orgM.gen) {
+    newGen = orgF.gen++;
+  } else {
+    newGen = orgM.gen++;
+  }
+    makeOrg(orgF.hncount, orgF.hlCount, newHome, orgF.x, orgF.y, orgF.rot, childHealth, newGenes, newGen);
+    console.log("pop["+newHome+"] was born or "+ popF.index +"and "+ popM.index);
 }
+
 
 function iterate() {
   for (var j = 0; j < 1; j++) {
@@ -660,14 +678,41 @@ function iterate() {
       checkEyePlants(org, "r");
       checkEyePlants(org, "l");
       readNet(org.nn);
-      for(var l = 0; l < plants.length; l++){
-          eat(org, plants[l]);
+      //mating
+      if(org.nn.outputs.mate.value > 0 && org.mated == false) {
+          for(var k = 0; k < pop.length; k++) {
+              if(pop[k] == null || findDis(pop[k].x,pop[k].y,org.x,org.y) > (pop[k].radius + org.radius)*(pop[k].radius + org.radius)) {
+                  continue;
+              }
+              //if they are the different genders, k does not want to mate, k has already mated, k is the same as org, then skip.
+              if(org.morph.gender == pop[k].morph.gender || pop[k].nn.outputs.mate.value < 0 || k.mated = true || org.index == pop[k].index) {
+                  continue;
+              }
+              var orgF, orgM;
+              if(org.morph.gender == "male") {
+                  orgM = org;
+                  orgF = pop[k];
+              } else {
+                  orgF = org
+                  orgM = pop[k];
+                  
+              }
+              birth(orgF, orgM);
+              org.mated = true;
+              pop[k].mated = true;
+              
+              break;
+          }
       }
     }
     for (var i = 0; i < pop.length; i++) {
       var org = pop[i];
       if (org == null) {
         continue;
+      }
+      
+      for(var l = 0; l < plants.length; l++){
+        eat(org, plants[l]);
       }
       org.rot += org.nn.outputs.rot.value;
       org.x += Math.cos(org.rot) * org.nn.outputs.speed.value*maxspeed;
