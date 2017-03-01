@@ -40,7 +40,7 @@ var pop = [];
 function newPop(popCount) {
   pop = [];
   for (var i = 0; i < popCount; i++) {
-    var genes = {};
+    var genes = newGenes();
     pop[i] = makeOrg(4, 3, i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, 30, genes);
     pop[i].genes = genes;
   }
@@ -88,16 +88,39 @@ function stop() {
   running = false;
 }
 
+function newGenes(){
+  return {
+    syn:{},
+    attr:{},
+  }
+}
+
 function findSyn(genes, sid) {
-  return pnrand();
+  var v = genes.syn[sid];
+  if (v != null) {
+    return v;
+  }
+  v = pnrand();
+  genes.syn[sid] = v;
+  return v;
 }
 function findAttr(genes, aid){
-  return rand();
+  var v = genes.attr[aid];
+  if (v != null) {
+    return v;
+  }
+  v = rand();
+  genes.attr[aid] = v;
+  return v;
 }
 function setAttr(genes, aid, value) {
-
-  //if genes.attr[aid] is defined return it, else return value
-  return value;
+  var v = genes.attr[aid];
+  if (v != null) {
+    return v;
+  }
+  v = value;
+  genes.attr[aid] = v;
+  return v;
 }
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
 var inputStore = {
