@@ -90,7 +90,7 @@ function newGenes(){
   return {
     syn:{},
     attr:{},
-  }
+  };
 }
 
 function findSyn(genes, sid) {
@@ -622,7 +622,6 @@ function eat(org, plant) {
 } */
 
 function birth(orgF, orgM) {
-  var childHealth = 20; //eventually I need to base this off something.+
   var i = 0;
   var bits = [];
   var mutationRate = 0.01;
@@ -647,8 +646,11 @@ function birth(orgF, orgM) {
     }
     newGenes.syn[bits[i].gene] = pnrand();
   }
-
-  var newHome = null;
+  
+  orgF.health -= 10;
+  var childHealth = orgF.health/2
+  orgF.health /= 2;
+  var newHome;
   for(var i = 0;; i++) {
     if(pop[i] == null) {
        newHome = i;
@@ -661,10 +663,10 @@ function birth(orgF, orgM) {
   } else {
     newGen = orgM.gen + 1;
   }
-    pop[newHome] = makeOrg(orgF.hnCount, orgF.hlCount, newHome, orgF.x, orgF.y, orgF.rot, childHealth, newGenes, newGen);
+    children[newHome] = makeOrg(orgF.hnCount, orgF.hlCount, newHome, orgF.x, orgF.y, orgF.rot, childHealth, newGenes, newGen);
     console.log("pop["+newHome+"] was born or "+ orgF.index +"and "+ orgM.index);
 }
-
+var children = [];
 
 function iterate() {
   for (var j = 0; j < 1; j++) {
@@ -705,12 +707,18 @@ function iterate() {
           }
       }
     }
+    for(var i = 0; i < children.length; i++) {
+        if(children[i]!=null) {
+            pop[i] = deepClone(children[i]);
+            children[i] = null;
+        }
+    }
     for (var i = 0; i < pop.length; i++) {
       var org = pop[i];
       if (org == null) {
         continue;
       }
-
+    
       for(var l = 0; l < plants.length; l++){
         eat(org, plants[l]);
       }
@@ -733,6 +741,8 @@ function iterate() {
         console.log("death of " + org.index);
         pop[i] = null;
       }
+    
+    
     }
   }
   iterations++;
