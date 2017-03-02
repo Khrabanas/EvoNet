@@ -40,9 +40,7 @@ var pop = [];
 function newPop(popCount) {
   pop = [];
   for (var i = 0; i < popCount; i++) {
-    var genes = newGenes();
-    pop[i] = makeOrg(4, 3, i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, 30, genes, 0);
-    pop[i].genes = genes;
+    pop[i] = makeOrg(4, 3, i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, 30, newGenes(), 0);
   }
 }
 
@@ -73,7 +71,7 @@ function makePlant(arrayPos, cal, x, y) {
 var running = false;
 var time = null;
 function run(msecs) {
-	if (running === true){
+	if (running == true){
 		console.log("Error in function: 'run', Time is already passing, use stop and run again.");
 		return;
 	}
@@ -213,6 +211,7 @@ function buildNet(hnCount, hlCount, genes) {
 					continue;
 				}
         var sid = input+" "+layer+" "+node;
+
 				nn.inputs[input][layer][node].synapse = findSyn(genes, sid);
 			}
 		}
@@ -348,7 +347,7 @@ function getColor(genes){
     return ["hsl(",hue,",100%,50%)"].join("");
 }
 
-//makeOrg(4, 3, i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, 30, genes)
+//makeOrg(4, 3, i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, 30, genes, 0)
 function makeOrg(hnCount, hlCount, netHome, x, y, rot, health, genes, gen) {
     var org = {};
     org.index = netHome;
@@ -378,6 +377,7 @@ function makeOrg(hnCount, hlCount, netHome, x, y, rot, health, genes, gen) {
     org.morph.eye.range = setAttr(genes, "eyeRange", 100);
     org.morph.eye.pos = {};
     getEyes(org);
+    org.genes = genes;
     //in relation to eye.
     return org;
 }
@@ -623,8 +623,6 @@ function eat(org, plant) {
 
 function birth(orgF, orgM) {
   var childHealth = 20; //eventually I need to base this off something.+
-  
-  var obj = org.genes;
   var i = 0;
   var bits = [];
   var mutationRate = 0.01;
@@ -635,34 +633,36 @@ function birth(orgF, orgM) {
   for (var i = bits.length/2; i > 0; i--) { //what if it runs over the same gene twice or more?
     for(;;) {
       var j = Math.floor(bits.length*rand());
-      if(rand()<mutationRate) {
-        bits[j].val = true;
-        newGenes.syn[bits[j].gene] = pnrand();
-        break;
-      } else if (!bits[j].val) {
-        bits[j].val = true;
-        newGenes.syn[bits[j].gene] = orgM.genes.syn[bits[j].gene];
-        break;
+      if (bits[j].val) {
+        continue
       }
+      bits[j].val = true;
+      newGenes.syn[bits[j].gene] = orgM.genes.syn[bits[j].gene];
+      break;
     }
   }
-  
-  
-  
+  for (var i = 0; i < bits.length; i++) {
+    if(rand()>mutationRate) {
+      continue;
+    }
+    newGenes.syn[bits[i].gene] = pnrand();
+  }
+
   var newHome = null;
   for(var i = 0;; i++) {
-    if(pop[i] === null) {
+    if(pop[i] == null) {
        newHome = i;
+       break;
     }
   }
-  var newGen = 1;
+  var newGen;
   if(orgF.gen > orgM.gen) {
-    newGen = orgF.gen++;
+    newGen = orgF.gen + 1;
   } else {
-    newGen = orgM.gen++;
+    newGen = orgM.gen + 1;
   }
-    makeOrg(orgF.hncount, orgF.hlCount, newHome, orgF.x, orgF.y, orgF.rot, childHealth, newGenes, newGen);
-    console.log("pop["+newHome+"] was born or "+ popF.index +"and "+ popM.index);
+    pop[newHome] = makeOrg(orgF.hnCount, orgF.hlCount, newHome, orgF.x, orgF.y, orgF.rot, childHealth, newGenes, newGen);
+    console.log("pop["+newHome+"] was born or "+ orgF.index +"and "+ orgM.index);
 }
 
 
@@ -685,7 +685,7 @@ function iterate() {
                   continue;
               }
               //if they are the different genders, k does not want to mate, k has already mated, k is the same as org, then skip.
-              if(org.morph.gender == pop[k].morph.gender || pop[k].nn.outputs.mate.value < 0 || k.mated = true || org.index == pop[k].index) {
+              if(org.morph.gender == pop[k].morph.gender || pop[k].nn.outputs.mate.value < 0 || k.mated == true || org.index == pop[k].index) {
                   continue;
               }
               var orgF, orgM;
@@ -695,12 +695,12 @@ function iterate() {
               } else {
                   orgF = org
                   orgM = pop[k];
-                  
+
               }
               birth(orgF, orgM);
               org.mated = true;
               pop[k].mated = true;
-              
+
               break;
           }
       }
@@ -710,7 +710,7 @@ function iterate() {
       if (org == null) {
         continue;
       }
-      
+
       for(var l = 0; l < plants.length; l++){
         eat(org, plants[l]);
       }
