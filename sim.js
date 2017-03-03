@@ -71,7 +71,7 @@ function makePlant(arrayPos, cal, x, y) {
 var running = false;
 var time = null;
 function run(msecs) {
-	if (running == true){
+	if (running){
 		console.log("Error in function: 'run', Time is already passing, use stop and run again.");
 		return;
 	}
@@ -368,13 +368,13 @@ function makeOrg(hnCount, hlCount, netHome, x, y, rot, health, genes, gen) {
     //pos is an angle.
     org.morph.eye = {};
     org.morph.eyePos = findAttr(genes, "eyePos")*Math.PI/2;
-    org.radius = setAttr(genes, "radius", 10);
+    org.radius = setAttr(genes, "radius", 15);
     org.morph.eyeRes = setAttr(genes, "eyeRes", 5);
     //eye resolution, how manny sightlines
     //current values not associated directly with other stuff like nn or morph.
     //in relation to center of head
     org.morph.eye.breadth = findAttr(genes, "eyeBreadth")*Math.PI;
-    org.morph.eye.range = setAttr(genes, "eyeRange", 100);
+    org.morph.eye.range = setAttr(genes, "eyeRange", 150);
     org.morph.eye.pos = {};
     getEyes(org);
     org.genes = genes;
@@ -513,7 +513,7 @@ function lineCircle(x1, y1, x2, y2, x3, y3, r) {
 
 function lineToPulse(x1, y1, x2, y2, x3, y3, r) {
   var lineAnswer = lineCircle(x1, y1, x2, y2, x3, y3, r);
-    if(lineAnswer == true) {
+    if(lineAnswer) {
         return 1;
     } else {
         return -1;
@@ -610,16 +610,6 @@ function eat(org, plant) {
         //console.log(org.index + " gained " + org.nn.outputs.eat.value*10 + " and plant #" +plant.index+" lost " + org.nn.outputs.eat.value+" and is now "+ plant.cal);
     }
 }
-/*function birth(fem, male) {
-  var baby;
-  for (var i = 0; i < pop.length; i++) {
-    if (pop[i] == null) {
-      baby = pop[i];
-      break;
-    }
-  }
-  baby = pop;
-} */
 
 function birth(orgF, orgM) {
   var i = 0;
@@ -669,7 +659,7 @@ function birth(orgF, orgM) {
 var children = [];
 
 function iterate() {
-  for (var j = 0; j < 1; j++) {
+  //for (var j = 0; j < 1; j++) {
     for (var i = 0; i < pop.length; i++) {
       var org = pop[i];
       if (org == null) {
@@ -695,7 +685,7 @@ function iterate() {
                   orgM = org;
                   orgF = pop[k];
               } else {
-                  orgF = org
+                  orgF = org;
                   orgM = pop[k];
 
               }
@@ -707,6 +697,7 @@ function iterate() {
           }
       }
     }
+    
     for(var i = 0; i < children.length; i++) {
         if(children[i]!=null) {
             pop[i] = deepClone(children[i]);
@@ -718,9 +709,14 @@ function iterate() {
       if (org == null) {
         continue;
       }
-    
+      if(1==1) {//actual requirements here plz
+          org.mated = false;
+      }
       for(var l = 0; l < plants.length; l++){
         eat(org, plants[l]);
+      }
+      if (org.health > 200) {
+          org.health = 200;
       }
       org.rot += org.nn.outputs.rot.value;
       org.x += Math.cos(org.rot) * org.nn.outputs.speed.value*maxspeed;
@@ -744,12 +740,14 @@ function iterate() {
     
     
     }
-  }
+  //}
   iterations++;
-  render();
+  if (true) {
+    render();
+  }
 }
 
-
+var rendering = false;
 
 function findDis(x1,y1,x2,y2) {
   return (x1-x2)*(x1-x2)+(y1-y2)*(y1-y2);
