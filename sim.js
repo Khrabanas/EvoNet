@@ -25,6 +25,15 @@ function deepClone(a) {
 }
 var worldW = 1000;
 var worldH = 1000;
+var worldR = 500;
+var centerX = worldW*0.5;
+var centerY = worldH*0.5;
+var marker = 0;
+var maxMarker = 500;
+var popMarks = [];
+var rendering = true;
+var birthHealth = 150;
+
 canvas.width = worldW;
 canvas.height = worldH;
 ctx.font = "10px Arial";
@@ -43,12 +52,12 @@ function newPop(popCount) {
     pop[i] = makeOrg(4, 3, i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, 30, newGenes(), 0);
   }
 }
-
+var maxNutr = 25
 var plants = [];
 function newHabitat(plantCount) {
   plants = [];
   for (var i=0; i<plantCount;i++ ){
-    makePlant(i, 25*rand(), rand()*canvas.width, rand()*canvas.height);
+    makePlant(i, maxNutr*rand(), rand()*canvas.width, rand()*canvas.height);
   }
 }
 
@@ -58,12 +67,15 @@ function poputat(popCount) {
   newHabitat(Math.round(popCount*2));
 }
 function makePlant(arrayPos, cal, x, y) {
-  plants[arrayPos] = {
-	cal:cal,
-	x:x,
-	y:y,
-	index:arrayPos,
+  var p = {
+	  cal:cal,
+	  x:x,
+	  y:y,
+    radius:0,
+	  index:arrayPos,
   };
+  withinBounds(p);
+  plants[arrayPos] = p;
 }
 
 
@@ -332,8 +344,8 @@ function readNet(nn) {
   }
 }
 
-function decideGender(genes) {
-    if (findAttr(genes, "gender") < 0.5) {
+function decideGender() {
+    if (rand() < 0.5) {
         return 'male';
     } else {
         return 'female';
@@ -354,6 +366,8 @@ function makeOrg(hnCount, hlCount, netHome, x, y, rot, health, genes, gen) {
     org.gen = gen;
     org.x = x;
     org.y = y;
+    org.radius = setAttr(genes, "radius", 15);
+    withinBounds(org);
     org.rot = rot;
     org.health = health;
     org.hnCount = hnCount;
@@ -364,11 +378,10 @@ function makeOrg(hnCount, hlCount, netHome, x, y, rot, health, genes, gen) {
     //morphology
     org.morph = {};
     org.morph.color = getColor(genes);
-    org.morph.gender = decideGender(genes);
+    org.morph.gender = decideGender();
     //pos is an angle.
     org.morph.eye = {};
-    org.morph.eyePos = findAttr(genes, "eyePos")*Math.PI/2;
-    org.radius = setAttr(genes, "radius", 15);
+    org.morph.eyePos = findAttr(genes, "eyePos")*Math.PI*0.5;
     org.morph.eyeRes = setAttr(genes, "eyeRes", 5);
     //eye resolution, how manny sightlines
     //current values not associated directly with other stuff like nn or morph.
@@ -540,7 +553,7 @@ function getEyes(org){ //working on this right now.
     for(var i=0; i < org.morph.eyeRes; i++) {
         //r = right eye, l is left...
         //these should be point, so that a line can be drawn from the eye to the point as a sight-line.
-        var offset = org.morph.eye.breadth/2 - i*org.morph.eye.breadth/org.morph.eyeRes
+        var offset = org.morph.eye.breadth*0.5 - i*org.morph.eye.breadth/org.morph.eyeRes
         org.morph.eye.pos.r[i] = {
             x: org.morph.eye.pos.r.x + Math.cos(org.rot - offset) * org.morph.eye.range,
             y: org.morph.eye.pos.r.y - Math.sin(org.rot - offset) * org.morph.eye.range,
@@ -556,10 +569,11 @@ function getEyes(org){ //working on this right now.
 //render should not cause any change, just render the scenario. use iterate for
 function render() {
     clearCanvas();
+    circle(centerX, centerY, worldR, "black", 5)
     for(var i = 0; i < plants.length; i++) {
         var p = plants[i];
         circle(p.x, p.y, p.cal, "green")
-        ctx.fillText(Math.round(100*p.cal)/100, p.x - p.cal/2, p.y + p.cal/2);
+        ctx.fillText(Math.round(100*p.cal)/100, p.x - p.cal*0.5, p.y + p.cal*0.5);
     }
     for(var i = 0; i < pop.length; i++) {
         var org = pop[i];
@@ -567,7 +581,7 @@ function render() {
           continue;
         }
         circle(org.x, org.y, org.radius, org.morph.color);
-        ctx.fillText(i, org.x - org.radius/2, org.y + org.radius/2);
+        ctx.fillText(i, org.x - org.radius*0.5, org.y + org.radius*0.5);
 
         for(var j = 0; j < org.morph.eyeRes; j++){
             line(org.morph.eye.pos.r.x, org.morph.eye.pos.r.y, org.morph.eye.pos.r[j].x, org.morph.eye.pos.r[j].y);
@@ -610,7 +624,18 @@ function eat(org, plant) {
         //console.log(org.index + " gained " + org.nn.outputs.eat.value*10 + " and plant #" +plant.index+" lost " + org.nn.outputs.eat.value+" and is now "+ plant.cal);
     }
 }
-
+function changePlantsTo(amount) {
+  var pl = plants.length;
+  if (amount > pl) {
+    for (var i = 0; i < amount - pl; i++) {
+      makePlant(i + pl, maxNutr*rand(), rand()*canvas.width, rand()*canvas.height);
+    }
+  } else {
+    for (var i = 0; i < pl - amount; i++) {
+      plants.pop();
+    }
+  }
+}
 function birth(orgF, orgM) {
   var i = 0;
   var bits = [];
@@ -619,7 +644,7 @@ function birth(orgF, orgM) {
   for (var x in newGenes.syn) {
     bits[i++] = {val:false, gene:x};
   }
-  for (var i = bits.length/2; i > 0; i--) { //what if it runs over the same gene twice or more?
+  for (var i = bits.length*0.5; i > 0; i--) { //what if it runs over the same gene twice or more?
     for(;;) {
       var j = Math.floor(bits.length*rand());
       if (bits[j].val) {
@@ -636,10 +661,10 @@ function birth(orgF, orgM) {
     }
     newGenes.syn[bits[i].gene] = pnrand();
   }
-  
+
   orgF.health -= 10;
-  var childHealth = orgF.health/2
-  orgF.health /= 2;
+  var childHealth = orgF.health*0.25;
+  orgF.health *= 0.75;
   var newHome;
   for(var i = 0;; i++) {
     if(pop[i] == null) {
@@ -654,16 +679,35 @@ function birth(orgF, orgM) {
     newGen = orgM.gen + 1;
   }
     children[newHome] = makeOrg(orgF.hnCount, orgF.hlCount, newHome, orgF.x, orgF.y, orgF.rot, childHealth, newGenes, newGen);
-    console.log("pop["+newHome+"] was born or "+ orgF.index +"and "+ orgM.index);
+    console.log("pop["+newHome+"] "+children[newHome].morph.gender+" was born of "+ orgF.index +" and "+ orgM.index);
 }
 var children = [];
 
+function withinBounds(org) {
+  var x = org.x - centerX;
+  var y = org.y - centerY;
+  var rMax = worldR - org.radius;
+  var d2 = (x*x+y*y);
+  if (rMax * rMax > d2) {
+    return;
+  }
+  var c = rMax/Math.sqrt(d2);
+  org.x = centerX + x * c;
+  org.y = centerY + y * c;
+}
+
 function iterate() {
   //for (var j = 0; j < 1; j++) {
+  var mC=0, fC=0;
     for (var i = 0; i < pop.length; i++) {
       var org = pop[i];
       if (org == null) {
         continue;
+      }
+      if (org.morph.gender == "male") {
+        mC++;
+      } else {
+        fC++;
       }
       checkEye(org, "r");
       checkEye(org, "l");
@@ -673,31 +717,33 @@ function iterate() {
       //mating
       if(org.nn.outputs.mate.value > 0 && org.mated == false) {
           for(var k = 0; k < pop.length; k++) {
-              if(pop[k] == null || findDis(pop[k].x,pop[k].y,org.x,org.y) > (pop[k].radius + org.radius)*(pop[k].radius + org.radius)) {
-                  continue;
-              }
-              //if they are the different genders, k does not want to mate, k has already mated, k is the same as org, then skip.
-              if(org.morph.gender == pop[k].morph.gender || pop[k].nn.outputs.mate.value < 0 || k.mated == true || org.index == pop[k].index) {
-                  continue;
-              }
-              var orgF, orgM;
-              if(org.morph.gender == "male") {
-                  orgM = org;
-                  orgF = pop[k];
-              } else {
-                  orgF = org;
-                  orgM = pop[k];
+            if(pop[k] == null || findDis(pop[k].x,pop[k].y,org.x,org.y) > (pop[k].radius + org.radius)*(pop[k].radius + org.radius)) {
+                continue;
+            }
+            //if they are the different genders, k does not want to mate, k has already mated, k is the same as org, then skip.
+            if(org.morph.gender == pop[k].morph.gender || pop[k].nn.outputs.mate.value < 0 || k.mated == true || org.index == pop[k].index) {
+                continue;
+            }
+            var orgF, orgM;
+            if(org.morph.gender == "male") {
+                orgM = org;
+                orgF = pop[k];
+            } else {
+                orgF = org;
+                orgM = pop[k];
+            }
+            if (orgF.health < birthHealth) {
+              continue;
+            }
+            birth(orgF, orgM);
+            org.mated = true;
+            pop[k].mated = true;
 
-              }
-              birth(orgF, orgM);
-              org.mated = true;
-              pop[k].mated = true;
-
-              break;
+            break;
           }
       }
     }
-    
+
     for(var i = 0; i < children.length; i++) {
         if(children[i]!=null) {
             pop[i] = deepClone(children[i]);
@@ -709,45 +755,50 @@ function iterate() {
       if (org == null) {
         continue;
       }
-      if(1==1) {//actual requirements here plz
+      if(true) {//actual requirements here plz
           org.mated = false;
       }
       for(var l = 0; l < plants.length; l++){
         eat(org, plants[l]);
       }
-      if (org.health > 200) {
-          org.health = 200;
-      }
       org.rot += org.nn.outputs.rot.value;
       org.x += Math.cos(org.rot) * org.nn.outputs.speed.value*maxspeed;
-      if (org.x > worldW) {
-        org.x -= worldW;
-      } else if (org.x < 0) {
-        org.x += worldW;
-      }
       org.y -= Math.sin(org.rot) * org.nn.outputs.speed.value*maxspeed;
-      if (org.y > worldH) {
-        org.y -= worldH;
-      } else if (org.y < 0) {
-        org.y += worldH;
-      }
+      withinBounds(org);
       getEyes(org);
-      org.health -= Math.abs(org.nn.outputs.speed.value);
+      if (org.health > 0) {
+        var metab = 0.01*Math.sqrt(org.health);
+        org.health -= Math.abs(org.nn.outputs.speed.value) + metab;
+      }
       if (org.health <= 0) {
-        console.log("death of " + org.index);
+        //console.log("death of " + org.index);
         pop[i] = null;
       }
-    
-    
+
+
     }
   //}
   iterations++;
-  if (true) {
+  if (marker>=maxMarker) {
+    console.log(mC+ " " + fC);
+    marker = 0;
+    var popmark = 0;
+    for(var i = 0; i < pop.length; i++) {
+      if (pop[i]!=null) {
+        popmark++;
+      }
+    }
+    popMarks[popMarks.length] = popmark;
+  } else {
+    marker++;
+  }
+
+  if (rendering) {
     render();
   }
 }
 
-var rendering = false;
+
 
 function findDis(x1,y1,x2,y2) {
   return (x1-x2)*(x1-x2)+(y1-y2)*(y1-y2);
