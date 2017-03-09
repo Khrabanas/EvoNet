@@ -2,7 +2,17 @@
 
 
 
+infantMortality/births
+var avgh = 0;
+var blah = 0;
+for(var i = 0; i<pop.length;i++) {
 
+if( pop[i] != null) {
+blah++;
+avgh+=pop[i].health;
+}
+}
+avgh /= blah;
 
 
 
