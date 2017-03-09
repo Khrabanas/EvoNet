@@ -33,6 +33,9 @@ var maxMarker = 500;
 var popMarks = [];
 var rendering = true;
 var birthHealth = 150;
+var births = 0;
+var infantMortality = 0;
+var deaths = 0;
 
 canvas.width = worldW;
 canvas.height = worldH;
@@ -52,7 +55,7 @@ function newPop(popCount) {
     pop[i] = makeOrg(4, 3, i, rand()*worldW, rand()*worldH, rand()*2*Math.PI, 30, newGenes(), 0);
   }
 }
-var maxNutr = 25
+var maxNutr = 25;
 var plants = [];
 function newHabitat(plantCount) {
   plants = [];
@@ -60,7 +63,18 @@ function newHabitat(plantCount) {
     makePlant(i, maxNutr*rand(), rand()*canvas.width, rand()*canvas.height);
   }
 }
-
+function grow(index) {
+    for(;;) {
+        var root = plants[Math.floor(plants.length*rand())];
+        if(root != null) {
+            var radius = maxNutr*rand();
+            var x = root.x + Math.cos(rand()*Math.PI*2)*(radius+root.radius);
+            var y = root.y - Math.sin(rand()*Math.PI*2)*(radius+root.radius);
+            makePlant(index, radius, x, y);
+            break;
+        }
+    }
+}
 //just does what it does
 function poputat(popCount) {
   newPop(popCount);
@@ -366,6 +380,7 @@ function makeOrg(hnCount, hlCount, netHome, x, y, rot, health, genes, gen) {
     org.gen = gen;
     org.x = x;
     org.y = y;
+    org.lifespan = 0;
     org.radius = setAttr(genes, "radius", 15);
     withinBounds(org);
     org.rot = rot;
@@ -680,6 +695,7 @@ function birth(orgF, orgM) {
   }
     children[newHome] = makeOrg(orgF.hnCount, orgF.hlCount, newHome, orgF.x, orgF.y, orgF.rot, childHealth, newGenes, newGen);
     console.log("pop["+newHome+"] "+children[newHome].morph.gender+" was born of "+ orgF.index +" and "+ orgM.index);
+    births++;
 }
 var children = [];
 
@@ -773,8 +789,12 @@ function iterate() {
       if (org.health <= 0) {
         //console.log("death of " + org.index);
         pop[i] = null;
+        deaths++;
+        if (org.lifespan<500) {
+            infantMortality++;
+        }
       }
-
+      org.lifespan++;
 
     }
   //}
