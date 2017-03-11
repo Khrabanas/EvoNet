@@ -34,9 +34,9 @@ var popMarks = [];
 var rendering = true;
 var birthHealth = 150;
 var births = 0;
-var infantMortality = 0;
+var mortality = [];
 var deaths = 0;
-
+var mC=0, fC=0;
 canvas.width = worldW;
 canvas.height = worldH;
 ctx.font = "10px Arial";
@@ -68,8 +68,9 @@ function grow(index) {
         var root = plants[Math.floor(plants.length*rand())];
         if(root != null) {
             var radius = maxNutr*rand();
-            var x = root.x + Math.cos(rand()*Math.PI*2)*(radius+root.radius);
-            var y = root.y - Math.sin(rand()*Math.PI*2)*(radius+root.radius);
+            var ang = rand()*Math.PI*2;
+            var x = root.x + Math.cos(ang)*(radius+root.cal);
+            var y = root.y - Math.sin(ang)*(radius+root.cal);
             makePlant(index, radius, x, y);
             break;
         }
@@ -116,6 +117,7 @@ function newGenes(){
   return {
     syn:{},
     attr:{},
+    fixed:{},
   };
 }
 
@@ -138,12 +140,12 @@ function findAttr(genes, aid){
   return v;
 }
 function setAttr(genes, aid, value) {
-  var v = genes.attr[aid];
+  var v = genes.fixed[aid];
   if (v != null) {
     return v;
   }
   v = value;
-  genes.attr[aid] = v;
+  genes.fixed[aid] = v;
   return v;
 }
 //inputs and outputs are the two arrays that will be manually edited for now. they set the inputs and outputs.
@@ -586,6 +588,9 @@ function render() {
     clearCanvas();
     circle(centerX, centerY, worldR, "black", 5)
     for(var i = 0; i < plants.length; i++) {
+        if (plants[i]==null) {
+          continue;
+        }
         var p = plants[i];
         circle(p.x, p.y, p.cal, "green")
         ctx.fillText(Math.round(100*p.cal)/100, p.x - p.cal*0.5, p.y + p.cal*0.5);
@@ -626,11 +631,15 @@ function circle(centerX, centerY, radius, color, width) {
 }
 var iterations = 0;
 var maxspeed = 100;
-
+var deadPlants = [];
+var plantDelay = 0;
+var plantThreshold = 50;
 function eat(org, plant) {
     if(plant.cal <= 1) {
-        makePlant(plant.index, 25*rand(), rand()*canvas.width, rand()*canvas.height);
+        plants[plant.index] = null;
+        deadPlants.push(plant.index);
         //console.log("plant #"+plant.index+ " has died")
+        return;
     }
     //10 is a nutrition modifier; should be changed.
     if(findDis(org.x,org.y,plant.x,plant.y)<(org.radius+plant.cal)*(org.radius+plant.cal) && org.nn.outputs.eat.value > 0) {
@@ -639,17 +648,8 @@ function eat(org, plant) {
         //console.log(org.index + " gained " + org.nn.outputs.eat.value*10 + " and plant #" +plant.index+" lost " + org.nn.outputs.eat.value+" and is now "+ plant.cal);
     }
 }
-function changePlantsTo(amount) {
-  var pl = plants.length;
-  if (amount > pl) {
-    for (var i = 0; i < amount - pl; i++) {
-      makePlant(i + pl, maxNutr*rand(), rand()*canvas.width, rand()*canvas.height);
-    }
-  } else {
-    for (var i = 0; i < pl - amount; i++) {
-      plants.pop();
-    }
-  }
+function plantThresh(amount) {
+  plantThreshold = amount;
 }
 function birth(orgF, orgM) {
   var i = 0;
@@ -713,8 +713,8 @@ function withinBounds(org) {
 }
 
 function iterate() {
-  //for (var j = 0; j < 1; j++) {
-  var mC=0, fC=0;
+    mC=0;
+    fC=0;
     for (var i = 0; i < pop.length; i++) {
       var org = pop[i];
       if (org == null) {
@@ -775,6 +775,9 @@ function iterate() {
           org.mated = false;
       }
       for(var l = 0; l < plants.length; l++){
+        if (plants[l] == null) {
+          continue;
+        }
         eat(org, plants[l]);
       }
       org.rot += org.nn.outputs.rot.value;
@@ -790,14 +793,20 @@ function iterate() {
         //console.log("death of " + org.index);
         pop[i] = null;
         deaths++;
-        if (org.lifespan<500) {
-            infantMortality++;
-        }
+        mortality.push(org.lifespan);
       }
       org.lifespan++;
-
     }
-  //}
+    plantDelay+=rand();
+    if (plantDelay >= plantThreshold) {
+      plantDelay-=plantThreshold;
+      if (deadPlants.length > 0) {
+        grow(deadPlants.pop());
+
+        } else {
+          grow(plants.length);
+        }
+      }
   iterations++;
   if (marker>=maxMarker) {
     console.log(mC+ " " + fC);
@@ -816,11 +825,38 @@ function iterate() {
   if (rendering) {
     render();
   }
+  if (fC == 0 || mC == 0) {
+    stop();
+    console.log("No reproduction possible.");
+  }
 }
 
-
+function buildMortaility() {
+  mortality.sort(function(a, b){return a<b ? -1:1;});
+  var norm = 100.0/(mortality.length + fC + mC);
+  var csv = [["age at death", "mortality (%)"]];
+  for (var i = 0; i < mortality.length; i++) {
+      var x = mortality[i];
+      csv.push([x, (i+1)*norm]);
+  }
+  console.log(csv);
+  prepareData("mortality", csv);
+}
+function prepareData(file, x) {
+  var rows = [];
+  for (var i = 0; i < x.length; i++) {
+    rows.push(x[i].join(','));
+  }
+  var d = new Blob([rows.join("\r\n")], { type: 'text/csv' });
+  var a = document.getElementById("downloadAnchorElem");
+  a.download = file+".csv";
+  a.target = "_blank";
+  a.href = URL.createObjectURL(d);
+}
 
 function findDis(x1,y1,x2,y2) {
   return (x1-x2)*(x1-x2)+(y1-y2)*(y1-y2);
   //requires a Math.sqrt to get actual value.
 }
+poputat(geid('popNum').value);
+render();
