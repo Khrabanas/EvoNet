@@ -38,9 +38,42 @@ var mortality = [];
 var deaths = 0;
 var mC=0, fC=0;
 var plantPop = 0;
+var iterations = 0;
+var maxspeed = 100;
+var deadPlants = [];
+var plantDelay = 0;
+var plantThreshold = 25;
+var mutationRate = 0.01;
+var deliveryTime = 200;
+var litters = [];
 canvas.width = worldW;
 canvas.height = worldH;
 ctx.font = "10px Arial";
+function setConst() {
+  worldH = 1000;
+  worldW = 1000;
+  worldR = 500;
+  centerX = worldW*0.5;
+  centerY = worldH*0.5;
+  marker = 0;
+  maxMarker = 500;
+  popMarks = [];
+  rendering = true;
+  birthHealth = 150;
+  births = 0;
+  mortality = [];
+  deaths = 0;
+  mC=0, fC=0;
+  plantPop = 0;
+  iterations = 0;
+  maxspeed = 100;
+  deadPlants = [];
+  plantDelay = 0;
+  plantThreshold = 25;
+  mutationRate = 0.01;
+  deliveryTime = 200;
+  litters = [];
+}
 
 function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -60,7 +93,9 @@ var maxNutr = 25;
 var plants = [];
 function newHabitat(plantCount) {
   plants = [];
-  for (var i=0; i<plantCount;i++ ){
+  deadPlants = [];
+  plantPop = 0;
+  for (var i=0; i<plantCount;i++ ) {
     makePlant(i, maxNutr*rand(), rand()*canvas.width, rand()*canvas.height);
   }
 }
@@ -182,6 +217,10 @@ var inputStore = {
     peLL2:{value:-1},
     peLL3:{value:-1},
     peLL4:{value:-1},
+
+    hunger:{value:0},
+    gender:{value:0}
+
 };
 var outputStore = {
     rot:{value:0},
@@ -398,11 +437,13 @@ function makeOrg(hnCount, hlCount, netHome, x, y, rot, health, genes, gen) {
     org.hlCount = hlCount;
     org.mated = false;
     org.nn = buildNet(hnCount, hlCount, genes);
+    org.morph = {};
+    org.morph.gender = decideGender();
+    org.nn.inputs.gender.value = (org.morph.gender == "male") ? -1:+1;
     readNet(org.nn);
     //morphology
-    org.morph = {};
     org.morph.color = getColor(genes);
-    org.morph.gender = decideGender();
+    org.litterSize = Math.floor(1.0/(findAttr(genes, "litterSize") + 0.1));
     //pos is an angle.
     org.morph.eye = {};
     org.morph.eyePos = findAttr(genes, "eyePos")*Math.PI*0.5;
@@ -633,12 +674,7 @@ function circle(centerX, centerY, radius, color, width) {
     }
     ctx.stroke();
 }
-var iterations = 0;
-var maxspeed = 100;
-var deadPlants = [];
-var plantDelay = 0;
-var plantThreshold = 50;
-var mutationRate = 0.01;
+
 function eat(org, plant) {
     if(plant.cal <= 1) {
         plants[plant.index] = null;
@@ -655,7 +691,6 @@ function eat(org, plant) {
     }
 }
 
-var deliveryTime = 200;
 function conceive(orgF, orgM) {
   if (orgF.pregnant != null) {
     return;
@@ -671,16 +706,17 @@ function conceive(orgF, orgM) {
   orgF.childGen = newGen;
   console.log("female "+ orgF.index +" pregnant by male "+ orgM.index);
 }
-
+function checkHunger(org) {
+  org.nn.inputs.hunger.value = 2.0/(1+org.health/100) - 1.0;
+}
 function birth(orgF) {
-  orgF.health -= 10;
+  orgF.health -= 50;
   var childHealth = orgF.health*0.25;
   orgF.health *= 0.75;
-
-  var litterSize = Math.floor(childHealth/30);
-  console.log("female " + orgF.index +" gave birth to " + litterSize + " children of gen " + orgF.childGen);
+  litters.push(orgF.litterSize);
+  console.log("female " + orgF.index +" gave birth to " + orgF.litterSize + " children of gen " + orgF.childGen);
   var p = 0;
-  for (var n = 0; n < litterSize; n++) {
+  for (var n = 0; n < orgF.litterSize; n++) {
     var newGenes = deepClone(orgF.genes);
     var bits = [];
     var i = 0;
@@ -734,7 +770,7 @@ function birth(orgF) {
          break;
       }
     }
-    children[newHome] = makeOrg(orgF.hnCount, orgF.hlCount, newHome, orgF.x, orgF.y, orgF.rot, childHealth, newGenes, orgF.childGen)
+    children[newHome] = makeOrg(orgF.hnCount, orgF.hlCount, newHome, orgF.x, orgF.y, orgF.rot, childHealth/orgF.litterSize, newGenes, orgF.childGen)
     births++;
   }
   delete orgF.pregnant;
@@ -775,6 +811,7 @@ function iterate() {
       checkEye(org, "l");
       checkEyePlants(org, "r");
       checkEyePlants(org, "l");
+      checkHunger(org);
       readNet(org.nn);
 
       if (male) {
@@ -848,11 +885,10 @@ function iterate() {
       plantDelay-=plantThreshold;
       if (deadPlants.length > 0) {
         grow(deadPlants.pop());
-
-        } else {
-          grow(plants.length);
-        }
+      } else {
+        grow(plants.length);
       }
+    }
   iterations++;
   if (marker>=maxMarker) {
     console.log(mC+ " " + fC);
