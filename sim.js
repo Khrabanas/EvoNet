@@ -37,6 +37,7 @@ var births = 0;
 var mortality = [];
 var deaths = 0;
 var mC=0, fC=0;
+var plantPop = 0;
 canvas.width = worldW;
 canvas.height = worldH;
 ctx.font = "10px Arial";
@@ -64,24 +65,30 @@ function newHabitat(plantCount) {
   }
 }
 function grow(index) {
-    for(;;) {
-        var root = plants[Math.floor(plants.length*rand())];
-        if(root != null) {
-            var radius = maxNutr*rand();
-            var ang = rand()*Math.PI*2;
-            var x = root.x + Math.cos(ang)*(radius+root.cal);
-            var y = root.y - Math.sin(ang)*(radius+root.cal);
-            makePlant(index, radius, x, y);
-            break;
-        }
+  if (plantPop == 0) {
+    makePlant(index, maxNutr*rand(), rand()*canvas.width, rand()*canvas.height);
+    return;
+  }
+  for (;;) {
+    var root = plants[Math.floor(plants.length*rand())];
+    if (root != null) {
+      var radius = maxNutr*rand();
+      var ang = rand()*Math.PI*2;
+      var x = root.x + Math.cos(ang)*(radius+root.cal);
+      var y = root.y - Math.sin(ang)*(radius+root.cal);
+      makePlant(index, radius, x, y);
+      break;
     }
+  }
 }
 //just does what it does
 function poputat(popCount) {
   newPop(popCount);
   newHabitat(Math.round(popCount*2));
 }
+
 function makePlant(arrayPos, cal, x, y) {
+  plantPop++;
   var p = {
 	  cal:cal,
 	  x:x,
@@ -219,7 +226,7 @@ function buildNet(hnCount, hlCount, genes) {
 		nn.inputs[input] = deepClone(nn.hLayers);
 		nn.inputs[input].value = inputStore[input].value;
 
-		for(var output in nn.outputs) {
+		for (var output in nn.outputs) {
 			if (!nn.outputs.hasOwnProperty(output)) {
 				continue;
 			}
@@ -299,12 +306,12 @@ function buildNet(hnCount, hlCount, genes) {
 
 //a network thinking.
 function readNet(nn) {
-	for(var layer in nn.hLayers) {
+	for (var layer in nn.hLayers) {
 		if (!nn.hLayers.hasOwnProperty(layer) || typeof(nn.hLayers[layer].layerNumber) !== "number") {
 			continue;
 		}
     var thisLayer = nn.hLayers[layer];
-		for(var node in thisLayer) {
+		for (var node in thisLayer) {
 			if (!thisLayer.hasOwnProperty(node) || typeof(thisLayer[node].nodeNumber) !== "number" ) {
 				continue;
 			}
@@ -555,8 +562,7 @@ function lineToPulse(x1, y1, x2, y2, x3, y3, r) {
 
 
 
-function getEyes(org){ //working on this right now.
-
+function getEyes(org){
     //center coords are org.x and org.y
     org.morph.eye.pos.r = {
         x: org.x + Math.cos(org.rot - org.morph.eyePos)*org.radius,
@@ -567,7 +573,7 @@ function getEyes(org){ //working on this right now.
         y: org.y - Math.sin(org.rot + org.morph.eyePos)*org.radius,
     }
     //get sight line end points
-    for(var i=0; i < org.morph.eyeRes; i++) {
+    for (var i=0; i < org.morph.eyeRes; i++) {
         //r = right eye, l is left...
         //these should be point, so that a line can be drawn from the eye to the point as a sight-line.
         var offset = org.morph.eye.breadth*0.5 - i*org.morph.eye.breadth/org.morph.eyeRes
@@ -576,10 +582,8 @@ function getEyes(org){ //working on this right now.
             y: org.morph.eye.pos.r.y - Math.sin(org.rot - offset) * org.morph.eye.range,
         }
         org.morph.eye.pos.l[i] = {
-
             x: org.morph.eye.pos.l.x + Math.cos(org.rot + offset) * org.morph.eye.range,
             y: org.morph.eye.pos.l.y - Math.sin(org.rot + offset) * org.morph.eye.range,
-
         }
     }
 }
@@ -587,7 +591,7 @@ function getEyes(org){ //working on this right now.
 function render() {
     clearCanvas();
     circle(centerX, centerY, worldR, "black", 5)
-    for(var i = 0; i < plants.length; i++) {
+    for (var i = 0; i < plants.length; i++) {
         if (plants[i]==null) {
           continue;
         }
@@ -595,7 +599,7 @@ function render() {
         circle(p.x, p.y, p.cal, "green")
         ctx.fillText(Math.round(100*p.cal)/100, p.x - p.cal*0.5, p.y + p.cal*0.5);
     }
-    for(var i = 0; i < pop.length; i++) {
+    for (var i = 0; i < pop.length; i++) {
         var org = pop[i];
         if (org == null) {
           continue;
@@ -603,7 +607,7 @@ function render() {
         circle(org.x, org.y, org.radius, org.morph.color);
         ctx.fillText(i, org.x - org.radius*0.5, org.y + org.radius*0.5);
 
-        for(var j = 0; j < org.morph.eyeRes; j++){
+        for (var j = 0; j < org.morph.eyeRes; j++){
             line(org.morph.eye.pos.r.x, org.morph.eye.pos.r.y, org.morph.eye.pos.r[j].x, org.morph.eye.pos.r[j].y);
 
             line(org.morph.eye.pos.l.x, org.morph.eye.pos.l.y, org.morph.eye.pos.l[j].x, org.morph.eye.pos.l[j].y);
@@ -634,9 +638,11 @@ var maxspeed = 100;
 var deadPlants = [];
 var plantDelay = 0;
 var plantThreshold = 50;
+var mutationRate = 0.01;
 function eat(org, plant) {
     if(plant.cal <= 1) {
         plants[plant.index] = null;
+        plantPop--;
         deadPlants.push(plant.index);
         //console.log("plant #"+plant.index+ " has died")
         return;
@@ -648,57 +654,94 @@ function eat(org, plant) {
         //console.log(org.index + " gained " + org.nn.outputs.eat.value*10 + " and plant #" +plant.index+" lost " + org.nn.outputs.eat.value+" and is now "+ plant.cal);
     }
 }
-function plantThresh(amount) {
-  plantThreshold = amount;
-}
-function birth(orgF, orgM) {
-  var i = 0;
-  var bits = [];
-  var mutationRate = 0.01;
-  var newGenes = deepClone(orgF.genes);
-  for (var x in newGenes.syn) {
-    bits[i++] = {val:false, gene:x};
-  }
-  for (var i = bits.length*0.5; i > 0; i--) { //what if it runs over the same gene twice or more?
-    for(;;) {
-      var j = Math.floor(bits.length*rand());
-      if (bits[j].val) {
-        continue
-      }
-      bits[j].val = true;
-      newGenes.syn[bits[j].gene] = orgM.genes.syn[bits[j].gene];
-      break;
-    }
-  }
-  for (var i = 0; i < bits.length; i++) {
-    if(rand()>mutationRate) {
-      continue;
-    }
-    newGenes.syn[bits[i].gene] = pnrand();
-  }
 
-  orgF.health -= 10;
-  var childHealth = orgF.health*0.25;
-  orgF.health *= 0.75;
-  var newHome;
-  for(var i = 0;; i++) {
-    if(pop[i] == null) {
-       newHome = i;
-       break;
-    }
+var deliveryTime = 200;
+function conceive(orgF, orgM) {
+  if (orgF.pregnant != null) {
+    return;
   }
+  orgF.pregnant = deepClone(orgM.genes);
+  orgF.delivery = iterations + deliveryTime;
   var newGen;
   if(orgF.gen > orgM.gen) {
     newGen = orgF.gen + 1;
   } else {
     newGen = orgM.gen + 1;
   }
-    children[newHome] = makeOrg(orgF.hnCount, orgF.hlCount, newHome, orgF.x, orgF.y, orgF.rot, childHealth, newGenes, newGen);
-    console.log("pop["+newHome+"] "+children[newHome].morph.gender+" was born of "+ orgF.index +" and "+ orgM.index);
-    births++;
+  orgF.childGen = newGen;
+  console.log("female "+ orgF.index +" pregnant by male "+ orgM.index);
 }
-var children = [];
 
+function birth(orgF) {
+  orgF.health -= 10;
+  var childHealth = orgF.health*0.25;
+  orgF.health *= 0.75;
+
+  var litterSize = Math.floor(childHealth/30);
+  console.log("female " + orgF.index +" gave birth to " + litterSize + " children of gen " + orgF.childGen);
+  var p = 0;
+  for (var n = 0; n < litterSize; n++) {
+    var newGenes = deepClone(orgF.genes);
+    var bits = [];
+    var i = 0;
+    for (var x in newGenes.syn) {
+      bits[i++] = {val:false, gene:x};
+    }
+    for (var i = bits.length*0.5; i > 0; i--) {
+      for (;;) {
+        var j = Math.floor(bits.length*rand());
+        if (bits[j].val) {
+          continue
+        }
+        bits[j].val = true;
+        newGenes.syn[bits[j].gene] = orgF.pregnant.syn[bits[j].gene];
+        break;
+      }
+    }
+    for (var i = 0; i < bits.length; i++) {
+      if(rand()>mutationRate) {
+        continue;
+      }
+      newGenes.syn[bits[i].gene] = pnrand();
+    }
+
+    var bits = [];
+    var i = 0;
+    for (var x in newGenes.attr) {
+      bits[i++] = {val:false, attr:x};
+    }
+    for (var i = bits.length*0.5; i > 0; i--) {
+      for (;;) {
+        var j = Math.floor(bits.length*rand());
+        if (bits[j].val) {
+          continue
+        }
+        bits[j].val = true;
+        newGenes.attr[bits[j].attr] = orgF.pregnant.attr[bits[j].attr];
+        break;
+      }
+    }
+    for (var i = 0; i < bits.length; i++) {
+      if(rand()>mutationRate) {
+        continue;
+      }
+      newGenes.attr[bits[i].attr] = rand();
+    }
+    var newHome;
+    for (;; p++) {
+      if(pop[p] == null && children[p] == null) {
+         newHome = p;
+         break;
+      }
+    }
+    children[newHome] = makeOrg(orgF.hnCount, orgF.hlCount, newHome, orgF.x, orgF.y, orgF.rot, childHealth, newGenes, orgF.childGen)
+    births++;
+  }
+  delete orgF.pregnant;
+  delete orgF.delivery;
+  delete orgF.childGen;
+}
+var children = {};
 function withinBounds(org) {
   var x = org.x - centerX;
   var y = org.y - centerY;
@@ -711,7 +754,7 @@ function withinBounds(org) {
   org.x = centerX + x * c;
   org.y = centerY + y * c;
 }
-
+var adult = 1000;
 function iterate() {
     mC=0;
     fC=0;
@@ -720,50 +763,53 @@ function iterate() {
       if (org == null) {
         continue;
       }
-      if (org.morph.gender == "male") {
+      var male = (org.morph.gender == "male");
+      if (male) {
         mC++;
       } else {
         fC++;
       }
+
+      //evaluate the world
       checkEye(org, "r");
       checkEye(org, "l");
       checkEyePlants(org, "r");
       checkEyePlants(org, "l");
       readNet(org.nn);
-      //mating
-      if(org.nn.outputs.mate.value > 0 && org.mated == false) {
-          for(var k = 0; k < pop.length; k++) {
-            if(pop[k] == null || findDis(pop[k].x,pop[k].y,org.x,org.y) > (pop[k].radius + org.radius)*(pop[k].radius + org.radius)) {
-                continue;
-            }
-            //if they are the different genders, k does not want to mate, k has already mated, k is the same as org, then skip.
-            if(org.morph.gender == pop[k].morph.gender || pop[k].nn.outputs.mate.value < 0 || k.mated == true || org.index == pop[k].index) {
-                continue;
-            }
-            var orgF, orgM;
-            if(org.morph.gender == "male") {
-                orgM = org;
-                orgF = pop[k];
-            } else {
-                orgF = org;
-                orgM = pop[k];
-            }
-            if (orgF.health < birthHealth) {
-              continue;
-            }
-            birth(orgF, orgM);
-            org.mated = true;
-            pop[k].mated = true;
 
-            break;
+      if (male) {
+        continue;
+      }
+
+      if (org.pregnant != null) {
+        if (org.delivery > iterations) {
+          continue;
+        }
+        birth(org);
+      } else if (org.nn.outputs.mate.value > 0 && org.lifespan >= adult) {
+        //mating (org = fertile female)
+        for (var k = 0; k < pop.length; k++) {
+          if (pop[k] == null || findDis(pop[k].x,pop[k].y,org.x,org.y) > (pop[k].radius + org.radius)*(pop[k].radius + org.radius)) {
+              continue;
           }
+          //if they are the different genders, k does not want to mate, k has already mated, k is the same as org, then skip.
+          if (pop[k].morph.gender == "female" || pop[k].nn.outputs.mate.value < 0 || k.mated == true) {
+              continue;
+          }
+          if (org.health < birthHealth) {
+            continue;
+          }
+          conceive(org, pop[k]);
+          pop[k].mated = true;
+          break;
+        }
       }
     }
 
-    for(var i = 0; i < children.length; i++) {
+    for (var i in children) {
         if(children[i]!=null) {
-            pop[i] = deepClone(children[i]);
-            children[i] = null;
+            pop[i] = children[i];
+            delete children[i];
         }
     }
     for (var i = 0; i < pop.length; i++) {
@@ -771,10 +817,10 @@ function iterate() {
       if (org == null) {
         continue;
       }
-      if(true) {//actual requirements here plz
+      if(org.morph.gender == "male") {//males can mate next iteration
           org.mated = false;
       }
-      for(var l = 0; l < plants.length; l++){
+      for (var l = 0; l < plants.length; l++){
         if (plants[l] == null) {
           continue;
         }
@@ -812,7 +858,7 @@ function iterate() {
     console.log(mC+ " " + fC);
     marker = 0;
     var popmark = 0;
-    for(var i = 0; i < pop.length; i++) {
+    for (var i = 0; i < pop.length; i++) {
       if (pop[i]!=null) {
         popmark++;
       }
