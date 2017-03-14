@@ -8,6 +8,7 @@
     <button id="render-button"type="button" onclick="render()">render</button>
     <button id="newPop-button"type="button" onclick="setConst();poputat(geid('popNum').value);">new population and plants</button>
     <input type="text" id="popNum" value="40" />
+
     <button id="run-fast"type="button" onclick="stop(); run(1);">run fast</button>
     <button id="run-slow"type="button" onclick="stop(); run(250);">run slow</button>
     <button id="iterate"type="button" onclick="stop(); iterate();">iterate/stop</button>
@@ -17,5 +18,6 @@
 	  <script type="text/javascript" src="utility.js"></script>
     <script type="text/javascript" src="jsonloader.js"></script>
     <a id="downloadAnchorElem" onclick="buildMortaility();">click to download mortality data</a>
+    <a id="downloadPop" onclick="buildPopStat();">click to download popstat data</a>
   </body>
 </html>

@@ -29,7 +29,7 @@ var worldR = 500;
 var centerX = worldW*0.5;
 var centerY = worldH*0.5;
 var marker = 0;
-var maxMarker = 500;
+var maxMarker = 50;
 var popMarks = [];
 var rendering = true;
 var birthHealth = 150;
@@ -43,9 +43,10 @@ var maxspeed = 100;
 var deadPlants = [];
 var plantDelay = 0;
 var plantThreshold = 25;
-var mutationRate = 0.01;
+var mutationRate = 0.02;
 var deliveryTime = 200;
 var litters = [];
+var maxIteration = 30000;
 canvas.width = worldW;
 canvas.height = worldH;
 ctx.font = "10px Arial";
@@ -56,7 +57,7 @@ function setConst() {
   centerX = worldW*0.5;
   centerY = worldH*0.5;
   marker = 0;
-  maxMarker = 500;
+  maxMarker = 50;
   popMarks = [];
   rendering = true;
   birthHealth = 150;
@@ -70,11 +71,12 @@ function setConst() {
   deadPlants = [];
   plantDelay = 0;
   plantThreshold = 25;
-  mutationRate = 0.01;
+  mutationRate = 0.02;
   deliveryTime = 200;
   litters = [];
+  maxIteration = 30000;
 }
-
+setConst();
 function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
@@ -147,12 +149,17 @@ function run(msecs) {
 	time = setInterval(iterate, msecs);
 	running = true;
 }
-function stop() {
+function stop(final) {
   if (time != null) {
     clearInterval(time);
     time = null;
   }
   running = false;
+  if (final && callBack) {
+    var fn = callBack;
+    callBack = null;
+    fn();
+  }
 }
 
 function newGenes(){
@@ -890,6 +897,7 @@ function iterate() {
       }
     }
   iterations++;
+  marker++;
   if (marker>=maxMarker) {
     console.log(mC+ " " + fC);
     marker = 0;
@@ -899,43 +907,76 @@ function iterate() {
         popmark++;
       }
     }
-    popMarks[popMarks.length] = popmark;
-  } else {
-    marker++;
+    popMarks.push([iterations, popmark]);
   }
 
   if (rendering) {
     render();
   }
   if (fC == 0 || mC == 0) {
-    stop();
+    stop(true);
     console.log("No reproduction possible.");
+  } else if (iterations == maxIteration) {
+    stop(true);
+    console.log("reached max iterations");
   }
 }
-
-function buildMortaility() {
-  mortality.sort(function(a, b){return a<b ? -1:1;});
-  var norm = 100.0/(mortality.length + fC + mC);
-  var csv = [["age at death", "mortality (%)"]];
-  for (var i = 0; i < mortality.length; i++) {
-      var x = mortality[i];
-      csv.push([x, (i+1)*norm]);
-  }
-  console.log(csv);
-  prepareData("mortality", csv);
-}
-function prepareData(file, x) {
+function prepareData(file, x, element) {
   var rows = [];
   for (var i = 0; i < x.length; i++) {
     rows.push(x[i].join(','));
   }
   var d = new Blob([rows.join("\r\n")], { type: 'text/csv' });
-  var a = document.getElementById("downloadAnchorElem");
+  var a = document.getElementById(element);
   a.download = file+".csv";
   a.target = "_blank";
   a.href = URL.createObjectURL(d);
 }
 
+function buildMortaility() {
+  mortality.sort(function(a, b){return a<b ? -1:1;});
+  var norm = 100.0/(mortality.length + fC + mC);
+  var csv = [["#age at death", "mortality (%)"]];
+  for (var i = 0; i < mortality.length; i++) {
+      var x = mortality[i];
+      csv.push([x, (i+1)*norm]);
+  }
+  console.log(csv);
+  prepareData("mortality-"+seed+"-"+mutationRate+"-"+plantThreshold, csv, "downloadAnchorElem");
+}
+function buildPopStat() {
+  var csv = [["#iterations", "population"]];
+  for (var i = 0; i < popMarks.length; i++) {
+      csv.push(popMarks[i]);
+  }
+  console.log(csv);
+  prepareData("popstats-"+seed+"-"+mutationRate+"-"+plantThreshold, popMarks, "downloadPop");
+}
+
+function saveData() {
+  buildPopStat();
+  buildMortaility();
+  geid("downloadAnchorElem").click();
+  geid("downloadPop").click();
+  if (apt < 50) {
+    apt += 5;
+    getData(1, apt, 0.02);
+  } else {
+    console.log("finished");
+  }
+}
+
+var apt = 5;
+function getData(s33d, pt, mr) {
+  seed = s33d;
+  xorRandom = xor4096(seed);
+  setConst();
+  poputat(geid('popNum').value);
+  plantThreshold = pt;
+  mutationRate = mr;
+  callBack = saveData;
+  run(1);
+}
 function findDis(x1,y1,x2,y2) {
   return (x1-x2)*(x1-x2)+(y1-y2)*(y1-y2);
   //requires a Math.sqrt to get actual value.
