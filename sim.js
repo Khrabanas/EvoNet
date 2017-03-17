@@ -652,19 +652,16 @@ function render() {
         if (org == null) {
           continue;
         }
-        circle(org.x, org.y, org.radius, org.morph.color, 1, "#3F3FBF");
+        circle(org.x, org.y, org.radius, org.morph.color);
         ctx.fillText(i, org.x - org.radius*0.5, org.y + org.radius*0.5);
-        if (renderEyes) {
-            
-            for (var j = 0; j < org.morph.eyeRes; j++){
-                line(org.morph.eye.pos.r.x, org.morph.eye.pos.r.y, org.morph.eye.pos.r[j].x, org.morph.eye.pos.r[j].y);
-                
-                line(org.morph.eye.pos.l.x, org.morph.eye.pos.l.y, org.morph.eye.pos.l[j].x, org.morph.eye.pos.l[j].y);
-            }
+
+        for (var j = 0; j < org.morph.eyeRes; j++){
+            line(org.morph.eye.pos.r.x, org.morph.eye.pos.r.y, org.morph.eye.pos.r[j].x, org.morph.eye.pos.r[j].y);
+
+            line(org.morph.eye.pos.l.x, org.morph.eye.pos.l.y, org.morph.eye.pos.l[j].x, org.morph.eye.pos.l[j].y);
         }
    }
 }
-var renderEyes = true;
 function line(startX, startY, endX, endY) {
     ctx.beginPath();
     ctx.moveTo(startX, startY);
@@ -672,12 +669,9 @@ function line(startX, startY, endX, endY) {
     ctx.stroke();
 }
 
-function circle(centerX, centerY, radius, color, width, fillStyle) {
+function circle(centerX, centerY, radius, color, width) {
     ctx.beginPath();
-    var oldStyle = ctx.fillStyle;
-    if (typeOf(fillStyle) = "string") {
-        ctx.fillStyle = fillStyle;
-    }
+
     ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
     ctx.strokeStyle = color;
     if (width != undefined) {
@@ -686,7 +680,6 @@ function circle(centerX, centerY, radius, color, width, fillStyle) {
         ctx.lineWidth = 1;
     }
     ctx.stroke();
-    ctx.fillStyle = oldStyle;
 }
 
 function eat(org, plant) {
@@ -965,7 +958,7 @@ function saveData() {
   buildMortaility();
   geid("downloadAnchorElem").click();
   geid("downloadPop").click();
-  if (apt < aptLim) {
+  if (apt < 50) {
     apt += 5;
     getData(1, apt, 0.02);
   } else {
@@ -973,8 +966,7 @@ function saveData() {
   }
 }
 
-var apt = 10;
-var aptLim = 50;
+var apt = 5;
 function getData(s33d, pt, mr) {
   seed = s33d;
   xorRandom = xor4096(seed);
